@@ -27,7 +27,7 @@ class Image:
                 self.genders.append(int(split_var[1]))
     def check_loading_correctness(self):
         print("Total samples:", self.size)
-        print(self.files[0])
+        print("Example: ", self.files[0])
 
     @staticmethod
     def load_image_with_extension(filename, extension=".jpg"):

@@ -1,5 +1,6 @@
-import src.Image as Im
-import src.Charts as Ct
+import Src.Image as Im
+import Src.Charts as Ct
+import Src.Model as Md
 """"""""
 
 if __name__ == '__main__':
@@ -13,6 +14,20 @@ if __name__ == '__main__':
     charts.age_distribution()
     charts.gender_distribution()
     charts.sample()
+
+    """Model"""
+    model = Md.Model(charts.getter_df())
+    model.Train_Test_Split()
+
+    model.Build_Age_Model()
+    Md.Model.Age_learning_chart(model.age_history)
+    model.Save_age_model()
+
+    model.Build_Gender_Model()
+    Md.Model.Gender_learning_chart(model.gender_history)
+    model.Save_gender_model()
+
+
 
 """Camera"""
 # face_detector = fd()

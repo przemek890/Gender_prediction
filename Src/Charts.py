@@ -6,9 +6,10 @@ import random
 class Charts:
     def __init__(self, df):
         self.df = df
-        self.c_samp = 600
+        self.c_samp = 1000
+        self.bins = 80
 
-        bins = pd.cut(df['Ages'], 30)
+        bins = pd.cut(df['Ages'], self.bins)
 
         counts = bins.value_counts()
         bins_to_trim = counts[counts > self.c_samp].index
@@ -28,7 +29,7 @@ class Charts:
 
     def age_distribution(self):
         sns.set_theme()
-        sns.histplot(data=self.df, x='Ages', kde=True, bins=30)
+        sns.histplot(data=self.df, x='Ages', kde=True, bins=self.bins)
         plt.title("Age distribution in the population")
         plt.show()
     def gender_distribution(self):
@@ -47,4 +48,7 @@ class Charts:
         plt.imshow(img["Images"])
         plt.set_cmap('gray')
         plt.show()
-        print("Gender:", img["Genders"], "Age:", img["Ages"])
+        print("Example image info:: ""Gender:", img["Genders"], "Age:", img["Ages"])
+
+    def getter_df(self):
+        return self.df

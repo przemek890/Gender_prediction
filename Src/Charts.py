@@ -49,6 +49,7 @@ class Charts:
         plt.set_cmap('gray')
         plt.show()
         print("Example image info:: ""Gender:", img["Genders"], "Age:", img["Ages"])
+        print("Example shape: ",img["Images"].shape)
 
     def getter_df(self):
         return self.df

@@ -16,7 +16,7 @@ class Model:
         self.x_test_gender = None
         self.y_train_gender = None
         self.y_test_gender = None
-        self.epochs = 15
+        self.epochs = 20
 
         self.age_history = None
         self.gender_history = None
@@ -47,24 +47,44 @@ class Model:
         def Age_conv_arr():
             self.y_train_age = np.array(self.y_train_age)
             self.y_test_age = np.array(self.y_test_age)
-            self.x_train_age = np.array(self.x_train_age)
-            self.x_test_age = np.array(self.x_test_age)
+            self.x_train_age = np.array(self.x_train_age, dtype=np.float32)
+            self.x_test_age = np.array(self.x_test_age, dtype=np.float32)
         Age_conv_arr()
 
-        # Age_model
-        age_model = tf.keras.models.Sequential([
-            tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=self.x_train_age.shape[1:] + (1,)),
-            tf.keras.layers.MaxPooling2D((2, 2)),
-            tf.keras.layers.Flatten(),
-            tf.keras.layers.Dense(64, activation='relu'),
-            tf.keras.layers.Dense(1, activation='linear')
-        ])
-        # Model compilation
-        age_model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])
+        self.x_train_age = tf.expand_dims(self.x_train_age, axis=-1)
+        self.x_test_age = tf.expand_dims(self.x_test_age, axis=-1)
+
+        self.x_train_age = self.x_train_age / 255.0
+        self.x_test_age = self.x_test_age / 255.0
+
+
+        age_model = tf.keras.models.Sequential()
+        age_model.add(tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(128, 128, 1)))
+        age_model.add(tf.keras.layers.MaxPooling2D((2, 2)))
+        age_model.add(tf.keras.layers.Conv2D(64, (3, 3), activation='relu'))
+        age_model.add(tf.keras.layers.MaxPooling2D((2, 2)))
+        age_model.add(tf.keras.layers.Conv2D(128, (3, 3), activation='relu'))
+        age_model.add(tf.keras.layers.MaxPooling2D((2, 2)))
+        age_model.add(tf.keras.layers.Flatten())
+        age_model.add(tf.keras.layers.Dense(64, activation='relu'))
+        age_model.add(tf.keras.layers.Dropout(0.5))
+        age_model.add(tf.keras.layers.Dense(1, activation='relu'))
+
+        age_model.compile(loss='mean_squared_error',
+                          optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001))
+
+        age_model.summary()
 
         # Model fitting
         early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True) # Early Stopping
-        self.age_history = age_model.fit(self.x_train_age, self.y_train_age,epochs=self.epochs,validation_data=(self.x_test_age,self.y_test_age),callbacks=[early_stopping])
+        self.age_history = age_model.fit(
+            self.x_train_age,
+            self.y_train_age,
+            batch_size=32,
+            epochs=self.epochs,
+            validation_data=(self.x_test_age, self.y_test_age),
+            callbacks=[early_stopping]
+        )
 
         # Prediction on test data
         age_predictions = age_model.predict(self.x_test_age)
@@ -97,10 +117,18 @@ class Model:
 
         # Model compilation
         gender_model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+        gender_model.summary()
 
         # Model fitting
         early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True) # Early Stopping
-        self.gender_history = gender_model.fit(self.x_train_gender, self.y_train_gender,epochs=self.epochs,validation_data=(self.x_test_gender,self.y_test_gender),callbacks=[early_stopping])
+        self.age_history = gender_model.fit(
+            self.x_train_gender,
+            self.y_train_gender,
+            batch_size=32,
+            epochs=self.epochs,
+            validation_data=(self.x_test_gender,self.y_test_gender),
+            callbacks=[early_stopping]
+        )
 
         # Prediction on test data
         gender_predictions = gender_model.predict(self.x_test_gender)
@@ -123,29 +151,20 @@ class Model:
 
     @staticmethod
     def Age_learning_chart(age_history):
-
-        train_loss = age_history.history['loss']
-        val_loss = age_history.history['val_loss']
-
-        epochs = range(1, len(train_loss) + 1)
-        plt.plot(epochs, train_loss, 'b-', label='Training Loss')
-        plt.plot(epochs, val_loss, 'r-', label='Validation Loss')
-        plt.title('Training and Validation Loss')
-        plt.xlabel('Epochs')
-        plt.ylabel('Loss')
-        plt.legend()
+        plt.plot(age_history.history['loss'])
+        plt.plot(age_history.history['val_loss'])
+        plt.title('model accuracy')
+        plt.ylabel('accuracy')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'val'], loc='upper left')
         plt.show()
+
     @staticmethod
     def Gender_learning_chart(gender_history):
-
-        train_loss = gender_history.history['loss']
-        val_loss = gender_history.history['val_loss']
-
-        epochs = range(1, len(train_loss) + 1)
-        plt.plot(epochs, train_loss, 'b-', label='Training Loss')
-        plt.plot(epochs, val_loss, 'r-', label='Validation Loss')
-        plt.title('Training and Validation Loss')
-        plt.xlabel('Epochs')
-        plt.ylabel('Loss')
-        plt.legend()
+        plt.plot(gender_history.history['loss'])
+        plt.plot(gender_history.history['val_loss'])
+        plt.title('model accuracy')
+        plt.ylabel('accuracy')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'val'], loc='upper left')
         plt.show()

@@ -7,6 +7,7 @@ class FaceDetector:
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
         self.video_capture = cv2.VideoCapture(0)
         self.gender_model = tf.keras.models.load_model('Models/gender_model.h5')
+        self.age_model = tf.keras.models.load_model('Models/age_model.h5')
 
     def detect_faces(self):
         while True:
@@ -23,7 +24,16 @@ class FaceDetector:
                 gender_prediction = self.gender_model.predict(face_img)
                 gender_label = "Female" if gender_prediction[0] < 0.5 else "Male"  # Swap the gender labels
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                cv2.putText(frame, gender_label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+
+                age_prediction = self.age_model.predict(face_img)
+                age_label = f"Age: {int(age_prediction[0][0])} years"
+
+                text_size, _ = cv2.getTextSize(age_label, cv2.FONT_HERSHEY_SIMPLEX, 0.9, 2)
+                age_label_pos = (x + w - text_size[0], y + h + 30)
+                cv2.putText(frame, age_label, age_label_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.9, (128, 128, 128), 2)
+
+                gender_label_pos = (x, y - 10)
+                cv2.putText(frame, gender_label, gender_label_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.9, (128, 128, 128), 2)
 
             cv2.imshow('Video', frame)
 
@@ -32,6 +42,7 @@ class FaceDetector:
 
         self.video_capture.release()
         cv2.destroyAllWindows()
+
 
 
 

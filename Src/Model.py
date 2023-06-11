@@ -16,7 +16,7 @@ class Model:
         self.x_test_gender = None
         self.y_train_gender = None
         self.y_test_gender = None
-        self.epochs = 1
+        self.epochs = 15
 
         self.age_history = None
         self.gender_history = None

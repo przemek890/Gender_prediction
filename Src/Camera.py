@@ -1,9 +1,13 @@
 import cv2
+import numpy as np
+import tensorflow as tf
 
 class FaceDetector:
     def __init__(self):
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
         self.video_capture = cv2.VideoCapture(0)
+        self.gender_model = tf.keras.models.load_model('Models/gender_model.h5')
+
     def detect_faces(self):
         while True:
             ret, frame = self.video_capture.read()
@@ -11,7 +15,15 @@ class FaceDetector:
             faces = self.face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 
             for (x, y, w, h) in faces:
-                cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+                face_img = gray[y:y + h, x:x + w]
+                face_img = cv2.resize(face_img, (128, 128))
+                face_img = np.expand_dims(face_img, axis=0)
+                face_img = np.expand_dims(face_img, axis=-1)
+                face_img = face_img / 255.0
+                gender_prediction = self.gender_model.predict(face_img)
+                gender_label = "Female" if gender_prediction[0] < 0.5 else "Male"  # Swap the gender labels
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                cv2.putText(frame, gender_label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
             cv2.imshow('Video', frame)
 
@@ -20,6 +32,8 @@ class FaceDetector:
 
         self.video_capture.release()
         cv2.destroyAllWindows()
+
+
 
 
 

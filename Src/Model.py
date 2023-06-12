@@ -16,7 +16,7 @@ class Model:
         self.x_test_gender = None
         self.y_train_gender = None
         self.y_test_gender = None
-        self.epochs = 20
+        self.epochs = 5
 
         self.age_history = None
         self.gender_history = None
@@ -47,32 +47,20 @@ class Model:
         def Age_conv_arr():
             self.y_train_age = np.array(self.y_train_age)
             self.y_test_age = np.array(self.y_test_age)
-            self.x_train_age = np.array(self.x_train_age, dtype=np.float32)
-            self.x_test_age = np.array(self.x_test_age, dtype=np.float32)
+            self.x_train_age = np.array(self.x_train_age)
+            self.x_test_age = np.array(self.x_test_age)
         Age_conv_arr()
 
-        self.x_train_age = tf.expand_dims(self.x_train_age, axis=-1)
-        self.x_test_age = tf.expand_dims(self.x_test_age, axis=-1)
-
-        self.x_train_age = self.x_train_age / 255.0
-        self.x_test_age = self.x_test_age / 255.0
-
-
-        age_model = tf.keras.models.Sequential()
-        age_model.add(tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(128, 128, 1)))
-        age_model.add(tf.keras.layers.MaxPooling2D((2, 2)))
-        age_model.add(tf.keras.layers.Conv2D(64, (3, 3), activation='relu'))
-        age_model.add(tf.keras.layers.MaxPooling2D((2, 2)))
-        age_model.add(tf.keras.layers.Conv2D(128, (3, 3), activation='relu'))
-        age_model.add(tf.keras.layers.MaxPooling2D((2, 2)))
-        age_model.add(tf.keras.layers.Flatten())
-        age_model.add(tf.keras.layers.Dense(64, activation='relu'))
-        age_model.add(tf.keras.layers.Dropout(0.5))
-        age_model.add(tf.keras.layers.Dense(1, activation='relu'))
-
-        age_model.compile(loss='mean_squared_error',
-                          optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001))
-
+        # Age_model
+        age_model = tf.keras.models.Sequential([
+            tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=self.x_train_age.shape[1:] + (1,)),
+            tf.keras.layers.MaxPooling2D((2, 2)),
+            tf.keras.layers.Flatten(),
+            tf.keras.layers.Dense(64, activation='relu'),
+            tf.keras.layers.Dense(1, activation='linear')
+        ])
+        # Model compilation
+        age_model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])
         age_model.summary()
 
         # Model fitting
@@ -121,10 +109,9 @@ class Model:
 
         # Model fitting
         early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True) # Early Stopping
-        self.age_history = gender_model.fit(
+        self.gender_history = gender_model.fit(
             self.x_train_gender,
             self.y_train_gender,
-            batch_size=32,
             epochs=self.epochs,
             validation_data=(self.x_test_gender,self.y_test_gender),
             callbacks=[early_stopping]
@@ -145,9 +132,9 @@ class Model:
 
 
     def Save_age_model(self):
-        self.age_h5.save("Models/age_model.h5")
+        self.age_h5.save("age_model.h5")
     def Save_gender_model(self):
-        self.gender_h5.save("Models/gender_model.h5")
+        self.gender_h5.save("gender_model.h5")
 
     @staticmethod
     def Age_learning_chart(age_history):

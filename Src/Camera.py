@@ -22,7 +22,7 @@ class FaceDetector:
                 face_img = np.expand_dims(face_img, axis=-1)
                 face_img = face_img / 255.0
                 gender_prediction = self.gender_model.predict(face_img)
-                gender_label = "Female" if gender_prediction[0] < 0.5 else "Male"  # Swap the gender labels
+                gender_label = "Female" if gender_prediction[0] < 0.5 else "Male"
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
                 age_prediction = self.age_model.predict(face_img)

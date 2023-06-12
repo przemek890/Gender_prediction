@@ -7,7 +7,7 @@ class Charts:
     def __init__(self, df):
         self.df = df
         self.c_samp = 1000
-        self.bins = 80
+        self.bins = 30
 
         bins = pd.cut(df['Ages'], self.bins)
 

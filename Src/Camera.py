@@ -30,10 +30,10 @@ class FaceDetector:
 
                 text_size, _ = cv2.getTextSize(age_label, cv2.FONT_HERSHEY_SIMPLEX, 0.9, 2)
                 age_label_pos = (x + w - text_size[0], y + h + 30)
-                cv2.putText(frame, age_label, age_label_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.9, (128, 128, 128), 2)
+                cv2.putText(frame, age_label, age_label_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 0), 2)
 
                 gender_label_pos = (x, y - 10)
-                cv2.putText(frame, gender_label, gender_label_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.9, (128, 128, 128), 2)
+                cv2.putText(frame, gender_label, gender_label_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 0), 2)
 
             cv2.imshow('Video', frame)
 

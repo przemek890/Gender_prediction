@@ -16,7 +16,7 @@ class Model:
         self.x_test_gender = None
         self.y_train_gender = None
         self.y_test_gender = None
-        self.epochs = 5
+        self.epochs = 20
 
         self.age_history = None
         self.gender_history = None
@@ -140,18 +140,20 @@ class Model:
     def Age_learning_chart(age_history):
         plt.plot(age_history.history['loss'])
         plt.plot(age_history.history['val_loss'])
-        plt.title('model accuracy')
-        plt.ylabel('accuracy')
-        plt.xlabel('epoch')
-        plt.legend(['train', 'val'], loc='upper left')
+        plt.title('Model Loss')
+        plt.ylabel('Loss')
+        plt.xlabel('Epoch')
+        plt.legend(['Train', 'Validation'], loc='upper left')
+        plt.savefig("./Analysis/Age_learning_chart.png")
         plt.show()
 
     @staticmethod
     def Gender_learning_chart(gender_history):
-        plt.plot(gender_history.history['loss'])
-        plt.plot(gender_history.history['val_loss'])
-        plt.title('model accuracy')
-        plt.ylabel('accuracy')
-        plt.xlabel('epoch')
-        plt.legend(['train', 'val'], loc='upper left')
+        plt.plot(gender_history.history['accuracy'])
+        plt.plot(gender_history.history['val_accuracy'])
+        plt.title('Model Accuracy')
+        plt.ylabel('Accuracy')
+        plt.xlabel('Epoch')
+        plt.legend(['Train', 'Validation'], loc='upper left')
+        plt.savefig("./Analysis/Gender_learning_chart.png")
         plt.show()

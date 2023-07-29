@@ -5,33 +5,27 @@ import random
 """"""
 class Charts:
     def __init__(self, df):
-        self.df = df
-        self.c_samp = 1000
-        self.bins = 30
+        self.df = df[(df["Ages"] >= 15) & (df["Ages"] <= 80)]  # Obetnij dane na przedział: [15,80]
+        self.c_samp = 10000 # Obcinanie bins
+        self.bins = 30  # ilosc bins
 
-        bins = pd.cut(df['Ages'], self.bins)
+        """Trimmed Gender"""
+        men = self.df[self.df["Genders"] == 0]
+        women = self.df[self.df["Genders"] == 1]
+        n_samples = min(len(men), len(women))
+        men = men.sample(n=n_samples, random_state=42)
+        women = women.sample(n=n_samples, random_state=42)
+        self.df = pd.concat([men, women], axis=0)
 
-        counts = bins.value_counts()
-        bins_to_trim = counts[counts > self.c_samp].index
-
-        trimmed_data = []
-        for bin_value in bins.unique():
-            if bin_value in bins_to_trim:
-                bin_samples = df[bins == bin_value].sample(n=self.c_samp, random_state=42)
-                trimmed_data.append(bin_samples)
-            else:
-                trimmed_data.append(df[bins == bin_value])
-
-        trimmed_df = pd.concat(trimmed_data)
-        trimmed_df = trimmed_df[trimmed_df["Ages"] <= 80]
-        self.df = trimmed_df
         print("Final samples: ",len(self.df))
 
     def age_distribution(self):
         sns.set_theme()
         sns.histplot(data=self.df, x='Ages', kde=True, bins=self.bins)
         plt.title("Age distribution in the population")
+        plt.savefig("./Analysis/age_distribution.png")
         plt.show()
+
     def gender_distribution(self):
         sns.set_theme()
         sns.countplot(data=self.df, x='Genders')
@@ -40,6 +34,7 @@ class Charts:
         plt.title("Gender distribution in the population")
         plt.gca().set_xticks([0, 1])
         plt.gca().set_xticklabels(['Male', 'Female'])
+        plt.savefig("./Analysis/gender_distribution.png")
         plt.show()
 
     def sample(self):
@@ -47,6 +42,7 @@ class Charts:
         img = self.df.iloc[idx]
         plt.imshow(img["Images"])
         plt.set_cmap('gray')
+        plt.savefig("./Analysis/sample.png")
         plt.show()
         print("Example image info:: ""Gender:", img["Genders"], "Age:", img["Ages"])
         print("Example shape: ",img["Images"].shape)

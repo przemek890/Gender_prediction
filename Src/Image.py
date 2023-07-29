@@ -19,7 +19,7 @@ class Image:
             if image is not None:
                 if counter > self.max_sample:
                     break
-                image = cv2.resize(image, dsize=(128, 128))
+                image = cv2.resize(image, dsize=(200,200))
                 image= cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
                 self.images.append(image)
                 split_var = file.split('_')

@@ -1,13 +1,13 @@
 import cv2
 import numpy as np
-import tensorflow as tf
+import torch
 
 class FaceDetector:
     def __init__(self):
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
         self.video_capture = cv2.VideoCapture(0)
-        self.gender_model = tf.keras.models.load_model('Models/gender_model.h5')
-        self.age_model = tf.keras.models.load_model('Models/age_model.h5')
+        self.gender_model = torch.load('Models/gender_model.pth')
+        self.age_model = torch.load('Models/age_model.pth')
 
     def detect_faces(self):
         while True:
@@ -17,7 +17,7 @@ class FaceDetector:
 
             for (x, y, w, h) in faces:
                 face_img = gray[y:y + h, x:x + w]
-                face_img = cv2.resize(face_img, (200,200))
+                face_img = cv2.resize(face_img, (128,128))
                 face_img = np.expand_dims(face_img, axis=0)
                 face_img = np.expand_dims(face_img, axis=-1)
                 face_img = face_img / 255.0

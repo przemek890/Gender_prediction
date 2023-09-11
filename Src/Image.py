@@ -1,33 +1,22 @@
 import pandas as pd
 import os
 import cv2
+import random
 """"""""
 class Image:
     def __init__(self):
-        self.path = "/Users/przemek899/desktop/Age_prediction_app/UTKFace/"
-        self.files = [file for file in os.listdir(self.path) if file.lower().endswith(".jpg")]
-        self.size = len(self.files)
+        self.training_male_path  = os.getcwd() + "/../Dataset/Training/male/"
+        self.training_female_path = os.getcwd() + "/../Dataset/Training/female/"
+        self.validation_male_path = os.getcwd() + "/../Dataset/Validation/male/"
+        self.validation_female_path = os.getcwd() + "/../Dataset/Validation/female/"
+        self.training_male = [file for file in os.listdir(self.training_male_path) if file.lower().endswith(".jpg")]
+        self.training_female = [file for file in os.listdir(self.training_female_path) if file.lower().endswith(".jpg")]
+        self.validation_male = [file for file in os.listdir(self.validation_male_path) if file.lower().endswith(".jpg")]
+        self.validation_female = [file for file in os.listdir(self.validation_female_path ) if file.lower().endswith(".jpg")]
+
         self.images = []
-        self.ages = []
         self.genders = []
-        self.max_sample =  self.size
-    def select_people(self):
-        counter = 0
-        for file in self.files:
-            counter += 1
-            image = self.load_image_with_extension(self.path + file)
-            if image is not None:
-                if counter > self.max_sample:
-                    break
-                image = cv2.resize(image, dsize=(200,200))
-                image= cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-                self.images.append(image)
-                split_var = file.split('_')
-                self.ages.append(int(split_var[0]))
-                self.genders.append(int(split_var[1]))
-    def check_loading_correctness(self):
-        print("Total samples:", self.size)
-        print("Example: ", self.files[0])
+        self.purposes = []
 
     @staticmethod
     def load_image_with_extension(filename, extension=".jpg"):
@@ -36,12 +25,61 @@ class Image:
             if image is not None and not image.size == 0:
                 return image
         return None
+    def select_faces(self):
+        for file in self.training_male:
+            image = Image.load_image_with_extension(self.training_male_path + file)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            if image is None: break
+            gender = "male"
+            purpose = "training"
+            self.images.append(image)
+            self.genders.append(gender)
+            self.purposes.append(purpose)
 
+        for file in self.training_female:
+            image = Image.load_image_with_extension(self.training_female_path + file)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            if image is None: break
+            gender = "female"
+            purpose = "training"
+            self.images.append(image)
+            self.genders.append(gender)
+            self.purposes.append(purpose)
+
+        for file in self.validation_male:
+            image = Image.load_image_with_extension(self.validation_male_path + file)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            if image is None: break
+            gender = "male"
+            purpose = "validation"
+            self.images.append(image)
+            self.genders.append(gender)
+            self.purposes.append(purpose)
+
+        for file in self.validation_female:
+            image = Image.load_image_with_extension(self.validation_female_path + file)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            if image is None: break
+            gender = "female"
+            purpose = "validation"
+            self.images.append(image)
+            self.genders.append(gender)
+            self.purposes.append(purpose)
+
+    def make_DataFrame(self):
+        self.select_faces()
+        self.df = pd.DataFrame({"Image":self.images, "Gender":self.genders, "Purpose":self.purposes})
+
+    def check_loading_correctness(self):
+        self.size = len(self.df)
+        print("Total samples:", self.size)
+        rand = random.choice(self.training_male + self.training_female + self.validation_male + self.validation_female)
+        print("Example: ", rand)
+
+        men = self.df[self.df["Gender"] == "male"]
+        women = self.df[self.df["Gender"] == "female"]
+        print(f"Final samples: \nMale: {len(men)} \nFemale: {len(women)}",)
+
+    @property
     def getter_df(self):
-        images = pd.Series(self.images, name='Images')
-        ages = pd.Series(self.ages, name='Ages')
-        genders = pd.Series(self.genders, name='Genders')
-        df = pd.DataFrame({'Images': images, 'Ages': ages, 'Genders': genders})
-        return df
-    def getter_max_sample(self):
-        return self.max_sample
+        return self.df

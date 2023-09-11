@@ -1,159 +1,119 @@
-from keras.callbacks import EarlyStopping
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
-import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-""""""""
-class Model:
-    def __init__(self, df):
-        self.df = df
-        self.x_train_age = None
-        self.x_test_age = None
-        self.y_train_age = None
-        self.y_test_age = None
-        self.x_train_gender = None
-        self.x_test_gender = None
-        self.y_train_gender = None
-        self.y_test_gender = None
-        self.epochs = 20
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from sklearn.metrics import accuracy_score
+""""""""""""""""""""""""""""""""""""""""""
+class Custom_Net(nn.Module):
+    def __init__(self):
+        super(Custom_Net, self).__init__()
+        self.conv1 = nn.Conv2d(1, 64, kernel_size=3, stride=1, padding=1)
+        self.relu1 = nn.ReLU()
+        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
+        self.relu2 = nn.ReLU()
+        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.fc1 = nn.Linear(64, 128)
+        self.relu3 = nn.ReLU()
+        self.fc2 = nn.Linear(128, 1)
+        self.sigmoid = nn.Sigmoid()
 
-        self.age_history = None
-        self.gender_history = None
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.relu1(x)
+        x = self.pool1(x)
+        x = self.conv2(x)
+        x = self.relu2(x)
+        x = self.pool2(x)
+        x = self.global_avg_pool(x)
+        x = x.view(x.size(0), -1)
+        x = self.fc1(x)
+        x = self.relu3(x)
+        x = self.fc2(x)
+        x = self.sigmoid(x)
+        return x
+#########################
+class Build_Gender_Model:
+    def __init__(self, df,num_epochs=10):
+        self.df = df.copy()
+        self.df['Gender'] = self.df['Gender'].replace({'female': 1, 'male': 0})
 
-        self.age_h5 = None
-        self.gender_h5 = None
+        self.Train_Test_Split()
+        self.num_epochs = num_epochs
+
+        self.losses = []
+        self.accuracies = []
 
     def Train_Test_Split(self):
-        x = []
-        y_age = []
-        y_gender = []
+
+        self.x_train_gender = []
+        self.x_test_gender = []
+        self.y_train_gender = []
+        self.y_test_gender = []
 
         for i in range(len(self.df)):
-            ar = np.asarray(self.df['Images'].iloc[i])
-            x.append(ar)
-            agegen = [int(self.df['Ages'].iloc[i]), int(self.df['Genders'].iloc[i])]
-            y_age.append(agegen[0])
-            y_gender.append(agegen[1])
-        x = np.array(x)
+            if self.df["Purpose"].iloc[i] == "training":
+                array_training_im = np.asarray(self.df['Image'].iloc[i])
+                self.x_train_gender.append(array_training_im)
+                self.y_train_gender.append(int(self.df['Gender'].iloc[i]))
+            elif self.df["Purpose"].iloc[i] == "validation":
+                array_validation = np.asarray(self.df['Image'].iloc[i])
+                self.x_test_gender.append(array_validation)
+                self.y_test_gender.append(int(self.df['Gender'].iloc[i]))
 
-        self.x_train_age, self.x_test_age, self.y_train_age, self.y_test_age = train_test_split(x, y_age, test_size=0.2, stratify=y_age)
-        self.x_train_gender, self.x_test_gender, self.y_train_gender, self.y_test_gender = train_test_split(x, y_gender, test_size=0.2, stratify=y_gender)
+        print(f"x_train_gender: {len(self.x_train_gender)}, x_test_gender: {len(self.x_test_gender)}, y_train_gender: {len(self.y_train_gender)}, y_test_gender: {len(self.y_test_gender)}")
 
-        print("x_train_age: {}, x_test_age: {}, y_train_age: {}, y_test_age: {}".format(len(self.x_train_age), len(self.x_test_age), len(self.y_train_age), len(self.y_test_age)))
-        print("x_train_gender: {}, x_test_gender: {}, y_train_gender: {}, y_test_gender: {}".format(len(self.x_train_gender), len(self.x_test_gender), len(self.y_train_gender), len(self.y_test_gender)))
+        self.x_train_gender = torch.tensor(self.x_train_gender, dtype=torch.float32)
+        self.x_test_gender = torch.tensor(self.x_test_gender, dtype=torch.float32)
+        self.y_train_gender = torch.tensor(self.y_train_gender, dtype=torch.float32).view(-1, 1)
+        self.y_test_gender = torch.tensor(self.y_test_gender, dtype=torch.float32).view(-1, 1)
 
-    def Build_Age_Model(self):
-        def Age_conv_arr():
-            self.y_train_age = np.array(self.y_train_age)
-            self.y_test_age = np.array(self.y_test_age)
-            self.x_train_age = np.array(self.x_train_age)
-            self.x_test_age = np.array(self.x_test_age)
-        Age_conv_arr()
+        exit(0)
 
-        # Age_model
-        age_model = tf.keras.models.Sequential([
-            tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=self.x_train_age.shape[1:] + (1,)),
-            tf.keras.layers.MaxPooling2D((2, 2)),
-            tf.keras.layers.Flatten(),
-            tf.keras.layers.Dense(64, activation='relu'),
-            tf.keras.layers.Dense(1, activation='linear')
-        ])
-        # Model compilation
-        age_model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])
-        age_model.summary()
-
-        # Model fitting
-        early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True) # Early Stopping
-        self.age_history = age_model.fit(
-            self.x_train_age,
-            self.y_train_age,
-            batch_size=32,
-            epochs=self.epochs,
-            validation_data=(self.x_test_age, self.y_test_age),
-            callbacks=[early_stopping]
-        )
-
-        # Prediction on test data
-        age_predictions = age_model.predict(self.x_test_age)
-
-        # Convert predictions to labels
-        age_predictions = age_predictions.flatten().round().astype(int)
-
-        # Model evaluation
-        age_accuracy = accuracy_score(self.y_test_age, age_predictions)
-
-        # Display results
-        self.age_h5 = age_model
-        print("Accuracy of the age prediction model:", age_accuracy)
     def Build_Gender_Model(self):
-        def Gender_conv_arr():
-            self.x_train_gender = np.array(self.x_train_gender)
-            self.x_test_gender = np.array(self.x_test_gender)
-            self.y_train_gender = np.array(self.y_train_gender)
-            self.y_test_gender = np.array(self.y_test_gender)
-        Gender_conv_arr()
+        self.gender_model = Custom_Net()
+        criterion = nn.BCELoss()
+        optimizer = optim.Adam(self.gender_model.parameters(), lr=0.001)
 
-        # Gender_model
-        gender_model = tf.keras.models.Sequential([
-            tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=self.x_train_gender.shape[1:] + (1,)),
-            tf.keras.layers.MaxPooling2D((2, 2)),
-            tf.keras.layers.Flatten(),
-            tf.keras.layers.Dense(64, activation='relu'),
-            tf.keras.layers.Dense(1, activation='sigmoid')
-        ])
+        for epoch in range(self.num_epochs):
+            optimizer.zero_grad()
+            outputs = self.gender_model(self.x_train_gender)
 
-        # Model compilation
-        gender_model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-        gender_model.summary()
+            loss = criterion(outputs, self.y_train_gender)
+            loss.backward()
+            optimizer.step()
 
-        # Model fitting
-        early_stopping = EarlyStopping(monitor='val_loss', patience=3, restore_best_weights=True) # Early Stopping
-        self.gender_history = gender_model.fit(
-            self.x_train_gender,
-            self.y_train_gender,
-            epochs=self.epochs,
-            validation_data=(self.x_test_gender,self.y_test_gender),
-            callbacks=[early_stopping]
-        )
+            with torch.no_grad():
+                self.gender_model.eval()
+                gender_predictions = self.gender_model(self.x_test_gender)
+                gender_predictions = (gender_predictions > 0.5).int()
+                accuracy = accuracy_score(self.y_test_gender.numpy(), gender_predictions.numpy())
+                self.losses.append(loss.item())
+                self.accuracies.append(accuracy)
 
-        # Prediction on test data
-        gender_predictions = gender_model.predict(self.x_test_gender)
-
-        # Convert predictions to labels
-        gender_predictions = (gender_predictions > 0.5).astype(int)
-
-        # Model evaluation
-        gender_accuracy = accuracy_score(self.y_test_gender, gender_predictions)
-
-        # Display results
-        self.gender_h5 = gender_model
-        print("Accuracy of the gender prediction model:",gender_accuracy)
+            print(f'Epoch [{epoch + 1}/{self.num_epochs}], Loss: {loss.item():.4f}, Accuracy: {accuracy:.4f}')
 
 
-    def Save_age_model(self):
-        self.age_h5.save("age_model.h5")
-    def Save_gender_model(self):
-        self.gender_h5.save("gender_model.h5")
+    def Save_model(self,filename):
+        torch.save(self.gender_model.state_dict(), filename)
+    def Loss_accuracy_charts(self):
 
-    @staticmethod
-    def Age_learning_chart(age_history):
-        plt.plot(age_history.history['loss'])
-        plt.plot(age_history.history['val_loss'])
-        plt.title('Model Loss')
+        plt.figure(figsize=(10, 5))
+        plt.plot(range(1, len(self.losses) + 1), self.losses, label='Loss')
+        plt.xlabel('Epochs')
         plt.ylabel('Loss')
-        plt.xlabel('Epoch')
-        plt.legend(['Train', 'Validation'], loc='upper left')
-        plt.savefig("./Analysis/Age_learning_chart.png")
+        plt.legend()
+        plt.savefig("./Analysis/Loss.png")
         plt.show()
 
-    @staticmethod
-    def Gender_learning_chart(gender_history):
-        plt.plot(gender_history.history['accuracy'])
-        plt.plot(gender_history.history['val_accuracy'])
-        plt.title('Model Accuracy')
+        # Rysowanie wykresu dokładności
+        plt.figure(figsize=(10, 5))
+        plt.plot(range(1, len(self.accuracies) + 1), self.accuracies, label='Accuracy')
+        plt.xlabel('Epochs')
         plt.ylabel('Accuracy')
-        plt.xlabel('Epoch')
-        plt.legend(['Train', 'Validation'], loc='upper left')
-        plt.savefig("./Analysis/Gender_learning_chart.png")
+        plt.legend()
+        plt.savefig("./Analysis/Accuracy.png")
         plt.show()

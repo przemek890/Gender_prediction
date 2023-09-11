@@ -1,11 +1,13 @@
-from sklearn.model_selection import train_test_split
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.metrics import accuracy_score
+from tqdm import tqdm
 """"""""""""""""""""""""""""""""""""""""""
+import torch.nn as nn
+
 class Custom_Net(nn.Module):
     def __init__(self):
         super(Custom_Net, self).__init__()
@@ -35,8 +37,9 @@ class Custom_Net(nn.Module):
         x = self.fc2(x)
         x = self.sigmoid(x)
         return x
+
 #########################
-class Build_Gender_Model:
+class Gender_Model:
     def __init__(self, df,num_epochs=10):
         self.df = df.copy()
         self.df['Gender'] = self.df['Gender'].replace({'female': 1, 'male': 0})
@@ -46,7 +49,6 @@ class Build_Gender_Model:
 
         self.losses = []
         self.accuracies = []
-
     def Train_Test_Split(self):
 
         self.x_train_gender = []
@@ -66,19 +68,17 @@ class Build_Gender_Model:
 
         print(f"x_train_gender: {len(self.x_train_gender)}, x_test_gender: {len(self.x_test_gender)}, y_train_gender: {len(self.y_train_gender)}, y_test_gender: {len(self.y_test_gender)}")
 
-        self.x_train_gender = torch.tensor(self.x_train_gender, dtype=torch.float32)
-        self.x_test_gender = torch.tensor(self.x_test_gender, dtype=torch.float32)
-        self.y_train_gender = torch.tensor(self.y_train_gender, dtype=torch.float32).view(-1, 1)
-        self.y_test_gender = torch.tensor(self.y_test_gender, dtype=torch.float32).view(-1, 1)
-
-        exit(0)
+        self.x_train_gender = torch.tensor(np.array(self.x_train_gender) / 255.0, dtype=torch.float32).view(-1, 52, 52,1)
+        self.x_test_gender = torch.tensor(np.array(self.x_test_gender) / 255.0, dtype=torch.float32).view(-1, 52, 52, 1)
+        self.y_train_gender = torch.tensor(np.array(self.y_train_gender), dtype=torch.float32).view(-1, 1)
+        self.y_test_gender = torch.tensor(np.array(self.y_test_gender), dtype=torch.float32).view(-1, 1)
 
     def Build_Gender_Model(self):
         self.gender_model = Custom_Net()
         criterion = nn.BCELoss()
         optimizer = optim.Adam(self.gender_model.parameters(), lr=0.001)
 
-        for epoch in range(self.num_epochs):
+        for epoch in tqdm(range(self.num_epochs), desc="Training"):
             optimizer.zero_grad()
             outputs = self.gender_model(self.x_train_gender)
 
@@ -94,11 +94,7 @@ class Build_Gender_Model:
                 self.losses.append(loss.item())
                 self.accuracies.append(accuracy)
 
-            print(f'Epoch [{epoch + 1}/{self.num_epochs}], Loss: {loss.item():.4f}, Accuracy: {accuracy:.4f}')
 
-
-    def Save_model(self,filename):
-        torch.save(self.gender_model.state_dict(), filename)
     def Loss_accuracy_charts(self):
 
         plt.figure(figsize=(10, 5))
@@ -106,7 +102,7 @@ class Build_Gender_Model:
         plt.xlabel('Epochs')
         plt.ylabel('Loss')
         plt.legend()
-        plt.savefig("./Analysis/Loss.png")
+        plt.savefig("../Analysis/Loss.png")
         plt.show()
 
         # Rysowanie wykresu dokładności
@@ -115,5 +111,8 @@ class Build_Gender_Model:
         plt.xlabel('Epochs')
         plt.ylabel('Accuracy')
         plt.legend()
-        plt.savefig("./Analysis/Accuracy.png")
+        plt.savefig("../Analysis/Accuracy.png")
         plt.show()
+
+    def Save_model(self,filename):
+        torch.save(self.gender_model.state_dict(), filename)

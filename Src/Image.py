@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import cv2
+from PIL import Image
 import random
 """"""""
 class Image:

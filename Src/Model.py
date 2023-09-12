@@ -4,48 +4,37 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.metrics import accuracy_score
-from tqdm import tqdm
+from torch.utils.data import TensorDataset, DataLoader
 """"""""""""""""""""""""""""""""""""""""""
-import torch.nn as nn
 
 class Custom_Net(nn.Module):
     def __init__(self):
         super(Custom_Net, self).__init__()
-        self.conv1 = nn.Conv2d(1, 64, kernel_size=3, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=0)
         self.relu1 = nn.ReLU()
         self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
-        self.relu2 = nn.ReLU()
-        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
-        self.global_avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.fc1 = nn.Linear(64, 128)
-        self.relu3 = nn.ReLU()
-        self.fc2 = nn.Linear(128, 1)
-        self.sigmoid = nn.Sigmoid()
+        self.flatten = nn.Flatten()
+        self.fc1 = nn.Linear(64 * 25 * 25, 1)
 
     def forward(self, x):
         x = self.conv1(x)
         x = self.relu1(x)
         x = self.pool1(x)
-        x = self.conv2(x)
-        x = self.relu2(x)
-        x = self.pool2(x)
-        x = self.global_avg_pool(x)
-        x = x.view(x.size(0), -1)
+        x = self.flatten(x)
         x = self.fc1(x)
-        x = self.relu3(x)
-        x = self.fc2(x)
-        x = self.sigmoid(x)
+        x = torch.sigmoid(x)
         return x
-
 #########################
 class Gender_Model:
-    def __init__(self, df,num_epochs=10):
+    def __init__(self, df,num_epochs=10,patience=3):
         self.df = df.copy()
         self.df['Gender'] = self.df['Gender'].replace({'female': 1, 'male': 0})
 
         self.Train_Test_Split()
         self.num_epochs = num_epochs
+        self.patience = patience
+        self.best_accuracy = 0
+        self.counter = 0
 
         self.losses = []
         self.accuracies = []
@@ -68,32 +57,55 @@ class Gender_Model:
 
         print(f"x_train_gender: {len(self.x_train_gender)}, x_test_gender: {len(self.x_test_gender)}, y_train_gender: {len(self.y_train_gender)}, y_test_gender: {len(self.y_test_gender)}")
 
-        self.x_train_gender = torch.tensor(np.array(self.x_train_gender) / 255.0, dtype=torch.float32).view(-1, 52, 52,1)
-        self.x_test_gender = torch.tensor(np.array(self.x_test_gender) / 255.0, dtype=torch.float32).view(-1, 52, 52, 1)
+        self.x_train_gender = torch.tensor(np.array(self.x_train_gender) / 255.0, dtype=torch.float32).view(-1,3,52,52)
+        self.x_test_gender = torch.tensor(np.array(self.x_test_gender) / 255.0, dtype=torch.float32).view(-1,3,52,52)
         self.y_train_gender = torch.tensor(np.array(self.y_train_gender), dtype=torch.float32).view(-1, 1)
         self.y_test_gender = torch.tensor(np.array(self.y_test_gender), dtype=torch.float32).view(-1, 1)
+
+        train_dataset_gender = TensorDataset(self.x_train_gender, self.y_train_gender)
+        test_dataset_gender = TensorDataset(self.x_test_gender, self.y_test_gender)
+
+        batch_size = 64
+        self.trainloader = torch.utils.data.DataLoader(train_dataset_gender, batch_size=batch_size, shuffle=True)
+        self.testloader = torch.utils.data.DataLoader(test_dataset_gender, batch_size=batch_size, shuffle=True)
 
     def Build_Gender_Model(self):
         self.gender_model = Custom_Net()
         criterion = nn.BCELoss()
         optimizer = optim.Adam(self.gender_model.parameters(), lr=0.001)
 
-        for epoch in tqdm(range(self.num_epochs), desc="Training"):
-            optimizer.zero_grad()
-            outputs = self.gender_model(self.x_train_gender)
-
-            loss = criterion(outputs, self.y_train_gender)
-            loss.backward()
-            optimizer.step()
+        for epoch in range(self.num_epochs):
+            for inputs, labels in self.trainloader:
+                optimizer.zero_grad()
+                outputs = self.gender_model(inputs)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
 
             with torch.no_grad():
                 self.gender_model.eval()
-                gender_predictions = self.gender_model(self.x_test_gender)
-                gender_predictions = (gender_predictions > 0.5).int()
-                accuracy = accuracy_score(self.y_test_gender.numpy(), gender_predictions.numpy())
+                gender_predictions = []
+                true_labels = []
+
+                for inputs, labels in self.testloader:
+                    outputs = self.gender_model(inputs)
+                    gender_predictions.extend((outputs > 0.5).int().numpy())
+                    true_labels.extend(labels.numpy())
+
+                accuracy = accuracy_score(true_labels, gender_predictions)
                 self.losses.append(loss.item())
                 self.accuracies.append(accuracy)
 
+                print(f"Epoch {epoch + 1}: Loss {loss.item()}, Accuracy {accuracy}")
+
+                if accuracy > self.best_accuracy:
+                    self.best_accuracy = accuracy
+                    self.counter = 0
+                else:
+                    self.counter += 1
+                    if self.counter >= self.patience:
+                        print("Early stopping triggered.")
+                        break
 
     def Loss_accuracy_charts(self):
 
@@ -115,4 +127,4 @@ class Gender_Model:
         plt.show()
 
     def Save_model(self,filename):
-        torch.save(self.gender_model.state_dict(), filename)
+        torch.save({'weights': self.gender_model.state_dict()}, filename)

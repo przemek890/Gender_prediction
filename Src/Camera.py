@@ -29,6 +29,7 @@ class FaceDetector:
 
                     with torch.no_grad():
                         gender_prediction = self.gender_model(face_tensor)
+                        print(gender_prediction)
 
                     gender_label = "Female" if gender_prediction.item() > 0.5 else "Male"
                     cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)

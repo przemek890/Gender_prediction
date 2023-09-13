@@ -6,14 +6,11 @@ import random
 """"""""
 class Image:
     def __init__(self):
-        self.training_male_path  = os.getcwd() + "/../Dataset/Training/male/"
-        self.training_female_path = os.getcwd() + "/../Dataset/Training/female/"
-        self.validation_male_path = os.getcwd() + "/../Dataset/Validation/male/"
-        self.validation_female_path = os.getcwd() + "/../Dataset/Validation/female/"
-        self.training_male = [file for file in os.listdir(self.training_male_path) if file.lower().endswith(".jpg")]
-        self.training_female = [file for file in os.listdir(self.training_female_path) if file.lower().endswith(".jpg")]
-        self.validation_male = [file for file in os.listdir(self.validation_male_path) if file.lower().endswith(".jpg")]
-        self.validation_female = [file for file in os.listdir(self.validation_female_path ) if file.lower().endswith(".jpg")]
+        self.path  = os.getcwd() + "/../Dataset/"
+        self.training_male = [file for file in os.listdir(self.path) if file.endswith(".jpg") and file.split("_")[1] == '0' and file.split("_")[2].split(".")[0] == '0']
+        self.training_female = [file for file in os.listdir(self.path) if file.endswith(".jpg") and file.split("_")[1] == '1' and file.split("_")[2].split(".")[0] == '0']
+        self.validation_male = [file for file in os.listdir(self.path) if file.endswith(".jpg") and file.split("_")[1] == '0' and file.split("_")[2].split(".")[0] == '1']
+        self.validation_female = [file for file in os.listdir(self.path) if file.endswith(".jpg") and file.split("_")[1] == '1' and file.split("_")[2].split(".")[0] == '1']
 
         self.images = []
         self.genders = []
@@ -27,42 +24,24 @@ class Image:
                 return image
         return None
     def select_faces(self):
-        for file in self.training_male:
-            image = Image.load_image_with_extension(self.training_male_path + file)
+        for file in self.training_male +  self.training_female +  self.validation_male + self.validation_female:
+            gender,purpose = "",""
+            image = Image.load_image_with_extension(self.path + file)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             if image is None: break
-            gender = "male"
-            purpose = "training"
-            self.images.append(image)
-            self.genders.append(gender)
-            self.purposes.append(purpose)
+            elif file.split("_")[1] == '0' and file.split("_")[2].split(".")[0] == '0':
+                gender = "male"
+                purpose = "training"
+            elif file.split("_")[1] == '1' and file.split("_")[2].split(".")[0] == '0':
+                gender = "female"
+                purpose = "training"
+            elif file.split("_")[1] == '0' and file.split("_")[2].split(".")[0] == '1':
+                gender = "male"
+                purpose = "validation"
+            elif file.split("_")[1] == '1' and file.split("_")[2].split(".")[0] == '1':
+                gender = "female"
+                purpose = "validation"
 
-        for file in self.training_female:
-            image = Image.load_image_with_extension(self.training_female_path + file)
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            if image is None: break
-            gender = "female"
-            purpose = "training"
-            self.images.append(image)
-            self.genders.append(gender)
-            self.purposes.append(purpose)
-
-        for file in self.validation_male:
-            image = Image.load_image_with_extension(self.validation_male_path + file)
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            if image is None: break
-            gender = "male"
-            purpose = "validation"
-            self.images.append(image)
-            self.genders.append(gender)
-            self.purposes.append(purpose)
-
-        for file in self.validation_female:
-            image = Image.load_image_with_extension(self.validation_female_path + file)
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            if image is None: break
-            gender = "female"
-            purpose = "validation"
             self.images.append(image)
             self.genders.append(gender)
             self.purposes.append(purpose)

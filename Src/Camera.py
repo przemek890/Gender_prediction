@@ -14,22 +14,27 @@ class FaceDetector:
         self.gender_model.load_state_dict(checkpoint['weights'])
         self.gender_model.eval()
 
+
     def detect_faces(self):
         while True:
             _, frame = self.video_capture.read()
-            faces = self.face_cascade.detectMultiScale(frame , scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+            faces = self.face_cascade.detectMultiScale(frame , scaleFactor=1.1, minNeighbors=5, minSize=(128,128))
 
             for (x, y, w, h) in faces:
-                if w > 0 and h > 0:  # Upewnij się, że obszar twarzy ma poprawne wymiary.
+                if w > 0 and h > 0:
+                    face_tensor = []
                     face_img = frame[y:y + h, x:x + w]
                     face_img = cv2.resize(face_img, (52, 52))
-                    face_img = np.expand_dims(face_img, axis=0)
-                    face_img = face_img / 255.0
-                    face_tensor = torch.from_numpy(face_img).permute(0, 3, 1, 2).float()
+                    face_img = cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB)
+                    face_tensor.append(np.asarray(face_img))
+
+                    face_tensor = torch.tensor(np.array(face_tensor) / 255.0, dtype=torch.float32).reshape(-1, 3, 52,52)
 
                     with torch.no_grad():
                         gender_prediction = self.gender_model(face_tensor)
                         print(gender_prediction)
+
+
 
                     gender_label = "Female" if gender_prediction.item() > 0.5 else "Male"
                     cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)

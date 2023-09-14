@@ -4,10 +4,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.metrics import accuracy_score
-from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import TensorDataset
 """"""""""""""""""""""""""""""""""""""""""
-
-
 class Custom_Net(nn.Module):
     def __init__(self):
         super(Custom_Net, self).__init__()
@@ -43,7 +41,7 @@ class Custom_Net(nn.Module):
         x = self.relu(self.conv4(x))
         x = self.pool(x)
 
-        x = x.view(-1, 128)
+        x = x.reshape(-1, 128)
 
         x = self.relu(self.fc1(x))
         x = self.sigmoid(self.fc2(x))
@@ -52,15 +50,12 @@ class Custom_Net(nn.Module):
 
 #########################
 class Gender_Model:
-    def __init__(self, df,num_epochs=5,patience=5):
+    def __init__(self, df,num_epochs=5):
         self.df = df.copy()
         self.df['Gender'] = self.df['Gender'].replace({'female': 1, 'male': 0})
 
         self.Train_Test_Split()
         self.num_epochs = num_epochs
-        self.patience = patience
-        self.best_accuracy = 0
-        self.counter = 0
 
         self.losses = []
         self.accuracies = []
@@ -83,10 +78,10 @@ class Gender_Model:
 
         print(f"x_train_gender: {len(self.x_train_gender)}, x_test_gender: {len(self.x_test_gender)}, y_train_gender: {len(self.y_train_gender)}, y_test_gender: {len(self.y_test_gender)}")
 
-        self.x_train_gender = torch.tensor(np.array(self.x_train_gender) / 255.0, dtype=torch.float32).view(-1,3,52,52)
-        self.x_test_gender = torch.tensor(np.array(self.x_test_gender) / 255.0, dtype=torch.float32).view(-1,3,52,52)
-        self.y_train_gender = torch.tensor(np.array(self.y_train_gender), dtype=torch.float32).view(-1, 1)
-        self.y_test_gender = torch.tensor(np.array(self.y_test_gender), dtype=torch.float32).view(-1, 1)
+        self.x_train_gender = torch.tensor(np.array(self.x_train_gender) / 255.0, dtype=torch.float32).reshape(-1,3,52,52)
+        self.x_test_gender = torch.tensor(np.array(self.x_test_gender) / 255.0, dtype=torch.float32).reshape(-1,3,52,52)
+        self.y_train_gender = torch.tensor(np.array(self.y_train_gender), dtype=torch.float32).reshape(-1, 1)
+        self.y_test_gender = torch.tensor(np.array(self.y_test_gender), dtype=torch.float32).reshape(-1, 1)
 
         train_dataset_gender = TensorDataset(self.x_train_gender, self.y_train_gender)
         test_dataset_gender = TensorDataset(self.x_test_gender, self.y_test_gender)
@@ -118,20 +113,13 @@ class Gender_Model:
                     gender_predictions.extend((outputs > 0.5).int().numpy())
                     true_labels.extend(labels.numpy())
 
+
                 accuracy = accuracy_score(true_labels, gender_predictions)
                 self.losses.append(loss.item())
                 self.accuracies.append(accuracy)
 
                 print(f"Epoch {epoch + 1}: Loss {round(loss.item(),3)}, Accuracy {round(accuracy,3)}")
 
-                if accuracy > self.best_accuracy:
-                    self.best_accuracy = accuracy
-                    self.counter = 0
-                else:
-                    self.counter += 1
-                    if self.counter >= self.patience:
-                        print("Early stopping triggered.")
-                        break
 
     def Loss_accuracy_charts(self):
 

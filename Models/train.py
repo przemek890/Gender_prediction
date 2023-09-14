@@ -13,6 +13,7 @@ charts.gender_distribution()
 charts.sample()
 #
 """Gender_Model"""
-model = Md.Build_Gender_Model(charts.getter_df)
+model = Md.Gender_Model(charts.getter_df)
+model.Build_Gender_Model()
 model.Loss_accuracy_charts()
 model.Save_model('gender_model.pth')

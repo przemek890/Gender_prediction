@@ -3,7 +3,7 @@ import cv2
 import os
 from Src.Model import Custom_Net
 import torch
-from torchvision import transforms
+import numpy as np
 ######################
 def check_shape(image_paths):
     min_width = float('inf')
@@ -75,16 +75,22 @@ def check_model():
         gender_model.load_state_dict(checkpoint['weights'])
         gender_model.eval()
 
-        image = Image.open(path)
+        image = cv2.imread(path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        transform = transforms.Compose([transforms.ToTensor()])
-        image_tensor = transform(image).unsqueeze(0)
+        image_tensor = []
+        image_tensor.append(np.asarray(image))
+
+        image_tensor = torch.tensor(np.array(image_tensor) / 255.0, dtype=torch.float32).reshape(-1, 3, 52, 52)
 
         gender_prediction = gender_model(image_tensor)
 
         gender_label = "Female" if gender_prediction[0,0].item() > 0.5 else "Male"
 
         print(path, " :",gender_label, " ",gender_prediction[0,0].item())
+
+
+
 def rename_image(paths):
     counter = 0
     for path in paths:

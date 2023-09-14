@@ -10,8 +10,8 @@ class Charts:
 
     def gender_distribution(self):
         sns.set_theme()
-        palette = sns.color_palette("pastel")  # Dodaj paletę kolorów
-        sns.countplot(data=self.df, x='Gender', palette=palette)  # Użyj palety kolorów
+        palette = sns.color_palette("pastel")
+        sns.countplot(data=self.df, x='Gender', palette=palette)
         plt.xlabel('Gender')
         plt.ylabel('Quantity')
         plt.title("Gender distribution in the population")

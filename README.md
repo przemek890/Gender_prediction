@@ -6,6 +6,6 @@ An app that uses camera input to predict the gender of a person.
  - y - gender
  - z - purpose
 
-> Accuracy 92.2 % -> in test_dataset:
-![Accuracy](Analysis/Accuracy.png)
+> Accuracy 94.17975791913469 % -> in test_dataset:
+![Accuracy](Analysis/Accuracy_0.9417975791913469.png)
 

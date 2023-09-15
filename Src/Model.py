@@ -5,9 +5,10 @@ import torch.nn as nn
 import torch.optim as optim
 from sklearn.metrics import accuracy_score
 from torch.utils.data import TensorDataset
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 """"""""""""""""""""""""""""""""""""""""""
 class Custom_Net(nn.Module):
-    def __init__(self):
+    def __init__(self,dropout_prob=0.5):
         super(Custom_Net, self).__init__()
 
         kernel_s = 3
@@ -15,50 +16,54 @@ class Custom_Net(nn.Module):
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=kernel_s, padding=0)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
-        self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=kernel_s)
-        self.conv3 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=kernel_s)
-
-        self.conv4 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=kernel_s)
-        self.conv5 = nn.Conv2d(in_channels=128, out_channels=128, kernel_size=kernel_s)
-
-        self.fc1 = nn.Linear(128, 256)
+        self.fc1 = nn.Linear(25*25*32, 256)
 
         self.fc2 = nn.Linear(256, 1)
 
         self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
 
+        self.dropout = nn.Dropout(dropout_prob)
+
     def forward(self, x):
         x = self.relu(self.conv1(x))
         x = self.pool(x)
 
-        x = self.relu(self.conv2(x))
-        x = self.pool(x)
+        # x = self.relu(self.conv2(x))
+        # x = self.pool(x)
+        #
+        # x = self.relu(self.conv3(x))
+        # x = self.pool(x)
+        #
+        # x = self.relu(self.conv4(x))
+        # x = self.pool(x)
 
-        x = self.relu(self.conv3(x))
-        x = self.pool(x)
-
-        x = self.relu(self.conv4(x))
-        x = self.pool(x)
-
-        x = x.reshape(-1, 128)
+        x = x.reshape(-1, 25*25*32)
 
         x = self.relu(self.fc1(x))
+        x = self.dropout(x)
         x = self.sigmoid(self.fc2(x))
         return x
 
 
 #########################
 class Gender_Model:
-    def __init__(self, df,num_epochs=5):
+    def __init__(self, df,num_epochs=15,patience=3):
         self.df = df.copy()
         self.df['Gender'] = self.df['Gender'].replace({'female': 1, 'male': 0})
 
         self.Train_Test_Split()
         self.num_epochs = num_epochs
+        self.patience = patience
 
+        self.best_accuracy = 0.0
+        self.best_accuracy_loss = 0.0
+
+        self.best_model_weights = None
         self.losses = []
         self.accuracies = []
+
+        self.no_improvement_count = 0
     def Train_Test_Split(self):
 
         self.x_train_gender = []
@@ -92,16 +97,17 @@ class Gender_Model:
 
     def Build_Gender_Model(self):
         self.gender_model = Custom_Net()
-        criterion = nn.BCELoss()
-        optimizer = optim.Adam(self.gender_model.parameters(), lr=0.001)
+        self.criterion = nn.BCELoss()
+        self.optimizer = optim.Adam(self.gender_model.parameters(), lr=0.001)
 
+    def train(self):
         for epoch in range(self.num_epochs):
             for inputs, labels in self.trainloader:
-                optimizer.zero_grad()
+                self.optimizer.zero_grad()
                 outputs = self.gender_model(inputs)
-                loss = criterion(outputs, labels)
+                loss = self.criterion(outputs, labels)
                 loss.backward()
-                optimizer.step()
+                self.optimizer.step()
 
             with torch.no_grad():
                 self.gender_model.eval()
@@ -120,6 +126,21 @@ class Gender_Model:
 
                 print(f"Epoch {epoch + 1}: Loss {round(loss.item(),3)}, Accuracy {round(accuracy,3)}")
 
+            if accuracy > self.best_accuracy:
+                self.best_accuracy = accuracy
+                self.best_accuracy_loss = loss
+                self.best_model_weights = self.gender_model.state_dict()
+                self.no_improvement_count = 0
+            else:
+                self.no_improvement_count += 1
+
+            if self.no_improvement_count >= self.patience:
+                print(f"Stop learning, no improvement for {self.patience} epochs.")
+                break
+
+        if self.best_model_weights is not None:
+            self.gender_model.load_state_dict(self.best_model_weights)
+
 
     def Loss_accuracy_charts(self):
 
@@ -128,7 +149,7 @@ class Gender_Model:
         plt.xlabel('Epochs')
         plt.ylabel('Loss')
         plt.legend()
-        plt.savefig("../Analysis/Loss.png")
+        plt.savefig(f"../Analysis/Loss_{self.best_accuracy_loss}.png")
         plt.show()
 
         # Rysowanie wykresu dokładności
@@ -137,7 +158,7 @@ class Gender_Model:
         plt.xlabel('Epochs')
         plt.ylabel('Accuracy')
         plt.legend()
-        plt.savefig("../Analysis/Accuracy.png")
+        plt.savefig(f"../Analysis/Accuracy_{self.best_accuracy}.png")
         plt.show()
 
     def Save_model(self,filename):

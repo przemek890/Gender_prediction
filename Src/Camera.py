@@ -10,7 +10,7 @@ class FaceDetector:
 
         self.gender_model = Custom_Net()
 
-        checkpoint = torch.load("Models/gender_model.pth")
+        checkpoint = torch.load("Models/gender_model_0.9417975791913469.pth")
         self.gender_model.load_state_dict(checkpoint['weights'])
         self.gender_model.eval()
 
@@ -18,7 +18,7 @@ class FaceDetector:
     def detect_faces(self):
         while True:
             _, frame = self.video_capture.read()
-            faces = self.face_cascade.detectMultiScale(frame , scaleFactor=1.1, minNeighbors=5, minSize=(128,128))
+            faces = self.face_cascade.detectMultiScale(frame , scaleFactor=1.1, minNeighbors=5, minSize=(50,50))
 
             for (x, y, w, h) in faces:
                 if w > 0 and h > 0:
@@ -40,10 +40,10 @@ class FaceDetector:
                     cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
                     gender_label_pos = (x, y - 10)
-                    cv2.putText(frame, gender_label, gender_label_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 0), 2)
+                    cv2.putText(frame, gender_label, gender_label_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
 
                 gender_label_pos = (x, y - 10)
-                cv2.putText(frame, gender_label, gender_label_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 0), 2)
+                cv2.putText(frame, gender_label, gender_label_pos, cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
 
             cv2.imshow('Video', frame)
 

@@ -5,11 +5,15 @@ import random
 """"""""
 class Image:
     def __init__(self):
-        self.path  = os.getcwd() + "/../Dataset/"
-        self.training_male = [file for file in os.listdir(self.path) if file.endswith(".jpg") and file.split("_")[1] == '0' and file.split("_")[2].split(".")[0] == '0']
-        self.training_female = [file for file in os.listdir(self.path) if file.endswith(".jpg") and file.split("_")[1] == '1' and file.split("_")[2].split(".")[0] == '0']
-        self.validation_male = [file for file in os.listdir(self.path) if file.endswith(".jpg") and file.split("_")[1] == '0' and file.split("_")[2].split(".")[0] == '1']
-        self.validation_female = [file for file in os.listdir(self.path) if file.endswith(".jpg") and file.split("_")[1] == '1' and file.split("_")[2].split(".")[0] == '1']
+        self.path_training_male = os.getcwd() + "/Dataset/Training/male/"
+        self.path_training_female = os.getcwd() + "/Dataset/Training/female/"
+        self.path_validation_male = os.getcwd() + "/Dataset/Validation/male/"
+        self.path_validation_female = os.getcwd() + "/Dataset/Validation/female/"
+
+        self.training_male = [file for file in os.listdir(self.path_training_male) if file.endswith(".jpg")]
+        self.training_female = [file for file in os.listdir(self.path_training_female) if file.endswith(".jpg")]
+        self.validation_male = [file for file in os.listdir(self.path_validation_male) if file.endswith(".jpg")]
+        self.validation_female = [file for file in os.listdir(self.path_validation_female) if file.endswith(".jpg")]
 
         self.images = []
         self.genders = []
@@ -22,28 +26,35 @@ class Image:
             if image is not None and not image.size == 0:
                 return image
         return None
-    def select_faces(self):
-        for file in self.training_male +  self.training_female +  self.validation_male + self.validation_female:
-            gender,purpose = "",""
-            image = Image.load_image_with_extension(self.path + file)
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            if image is None: break
-            elif file.split("_")[1] == '0' and file.split("_")[2].split(".")[0] == '0':
-                gender = "male"
-                purpose = "training"
-            elif file.split("_")[1] == '1' and file.split("_")[2].split(".")[0] == '0':
-                gender = "female"
-                purpose = "training"
-            elif file.split("_")[1] == '0' and file.split("_")[2].split(".")[0] == '1':
-                gender = "male"
-                purpose = "validation"
-            elif file.split("_")[1] == '1' and file.split("_")[2].split(".")[0] == '1':
-                gender = "female"
-                purpose = "validation"
 
+    def select_faces(self):
+        for file in self.training_male:
+            image = Image.load_image_with_extension(self.path_training_male  + file)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             self.images.append(image)
-            self.genders.append(gender)
-            self.purposes.append(purpose)
+            self.genders.append("male")
+            self.purposes.append("training")
+
+        for file in self.training_female:
+            image = Image.load_image_with_extension(self.path_training_female+ file)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            self.images.append(image)
+            self.genders.append("female")
+            self.purposes.append("training")
+
+        for file in self.validation_male:
+            image = Image.load_image_with_extension(self.path_validation_male + file)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            self.images.append(image)
+            self.genders.append("male")
+            self.purposes.append("validation")
+
+        for file in self.validation_female:
+            image = Image.load_image_with_extension(self.path_validation_female + file)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            self.images.append(image)
+            self.genders.append("female")
+            self.purposes.append("validation")
 
     def make_DataFrame(self):
         self.select_faces()

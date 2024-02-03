@@ -17,7 +17,7 @@ class Charts:
         plt.title("Gender distribution in the population")
         plt.gca().set_xticks([0, 1])
         plt.gca().set_xticklabels(['Male', 'Female'])
-        plt.savefig("../Analysis/gender_distribution.png")
+        plt.savefig("/Analysis/gender_distribution.png")
         plt.show()
 
     def sample(self):

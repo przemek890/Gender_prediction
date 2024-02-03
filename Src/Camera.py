@@ -10,7 +10,7 @@ class FaceDetector:
 
         self.gender_model = Custom_Net()
 
-        checkpoint = torch.load("Models/gender_model_0.9417975791913469.pth")
+        checkpoint = torch.load("Models/gender_model.pth")
         self.gender_model.load_state_dict(checkpoint['weights'])
         self.gender_model.eval()
 

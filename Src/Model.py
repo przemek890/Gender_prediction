@@ -149,16 +149,17 @@ class Gender_Model:
         plt.xlabel('Epochs')
         plt.ylabel('Loss')
         plt.legend()
-        plt.savefig(f"../Analysis/Loss_{self.best_accuracy_loss}.png")
+        plt.title(f"Loss_{self.best_accuracy_loss}")
+        plt.savefig(f"Analysis/Loss.png")
         plt.show()
 
-        # Rysowanie wykresu dokładności
         plt.figure(figsize=(10, 5))
         plt.plot(range(1, len(self.accuracies) + 1), self.accuracies, label='Accuracy')
         plt.xlabel('Epochs')
         plt.ylabel('Accuracy')
         plt.legend()
-        plt.savefig(f"../Analysis/Accuracy_{self.best_accuracy}.png")
+        plt.title(f"Accuracy_{self.best_accuracy}")
+        plt.savefig(f"Analysis/Accuracy.png")
         plt.show()
 
     def Save_model(self,filename):

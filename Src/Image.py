@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import cv2
 import random
+from tabulate import tabulate
 """"""""
 class Image:
     def __init__(self):
@@ -59,16 +60,20 @@ class Image:
     def make_DataFrame(self):
         self.select_faces()
         self.df = pd.DataFrame({"Image":self.images, "Gender":self.genders, "Purpose":self.purposes})
-
     def check_loading_correctness(self):
         self.size = len(self.df)
-        print("Total samples:", self.size)
         rand = random.choice(self.training_male + self.training_female + self.validation_male + self.validation_female)
+
+        print("Total samples:", self.size)
         print("Example: ", rand)
 
         men = self.df[self.df["Gender"] == "male"]
         women = self.df[self.df["Gender"] == "female"]
-        print(f"Final samples: \nMale: {len(men)} \nFemale: {len(women)}",)
+
+        data = [['Male', len(men)], ['Female', len(women)]]
+        table = tabulate(data, headers=['Gender', 'Count'], tablefmt='pretty')
+
+        print(table)
 
     @property
     def getter_df(self):

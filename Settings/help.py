@@ -16,8 +16,12 @@ def remove_double_jpg(image_paths):
 def check_shape(image_paths):
     min_width = float('inf')
     min_height = float('inf')
+    max_width = float('-inf')
+    max_height = float('-inf')
     min_width_image = None
     min_height_image = None
+    max_width_image = None
+    max_height_image = None
 
     for path in image_paths:
         image = Image.open(path)
@@ -32,11 +36,24 @@ def check_shape(image_paths):
             min_height = height
             min_height_image = path
 
+        if width > max_width:
+            max_width = width
+            max_width_image = path
+
+        if height > max_height:
+            max_height = height
+            max_height_image = path
+
     image_1 = Image.open(min_width_image)
     image_2 = Image.open(min_height_image)
+    image_11 = Image.open(max_width_image)
+    image_22 = Image.open(max_height_image)
 
     print("Image with the smallest width:", min_width_image, image_1.size)
     print("Image with the smallest height:", min_height_image, image_2.size)
+    print("Image with the biggest width:", max_width_image, image_11.size)
+    print("Image with the biggest height:", max_height_image, image_22.size)
+
 def resize_image(image_paths,x=52,y=52):
     for path in image_paths:
         image = Image.open(path)
@@ -122,13 +139,13 @@ for path in paths:
     im_paths = [os.getcwd() + "/../" + path + "/" + x for x in image_paths if x.endswith(".jpg")]
     # remove_double_jpg(im_paths)
     # check_shape(im_paths)
-    # resize_image(im_paths)
+    resize_image(im_paths)
     # check_channels(im_paths)
     # is_rgb_image(im_paths)
     # rename_image(im_paths)
     # rgb_to_grayscale(im_paths) # WARNING
 
-check_model()
+# check_model()
 
 
 

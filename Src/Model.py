@@ -14,9 +14,10 @@ class Custom_Net(nn.Module):
         kernel_s = 3
 
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=kernel_s, padding=0)
+        self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=kernel_s, padding=0)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
-        self.fc1 = nn.Linear(25*25*32, 256)
+        self.fc1 = nn.Linear(11*11*64, 256)
 
         self.fc2 = nn.Linear(256, 1)
 
@@ -29,21 +30,16 @@ class Custom_Net(nn.Module):
         x = self.relu(self.conv1(x))
         x = self.pool(x)
 
-        # x = self.relu(self.conv2(x))
-        # x = self.pool(x)
-        #
-        # x = self.relu(self.conv3(x))
-        # x = self.pool(x)
-        #
-        # x = self.relu(self.conv4(x))
-        # x = self.pool(x)
+        x = self.relu(self.conv2(x))
+        x = self.pool(x)
 
-        x = x.reshape(-1, 25*25*32)
+        x = x.reshape(-1, 11*11*64)
 
         x = self.relu(self.fc1(x))
-        x = self.dropout(x)
+        # x = self.dropout(x)
         x = self.sigmoid(self.fc2(x))
         return x
+
 
 
 #########################
@@ -98,7 +94,7 @@ class Gender_Model:
     def Build_Gender_Model(self):
         self.gender_model = Custom_Net()
         self.criterion = nn.BCELoss()
-        self.optimizer = optim.Adam(self.gender_model.parameters(), lr=0.001)
+        self.optimizer = optim.AdamW(self.gender_model.parameters(), lr=0.0005)
 
     def train(self):
         for epoch in range(self.num_epochs):

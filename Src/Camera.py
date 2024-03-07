@@ -1,14 +1,14 @@
 import cv2
 import numpy as np
 import torch
-from Src.Model import Custom_Net
-
+from Gender_net import Net
+""""""""""""""""""""""""
 class FaceDetector:
     def __init__(self):
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
         self.video_capture = cv2.VideoCapture(0)
 
-        self.gender_model = Custom_Net()
+        self.gender_model = Net()
 
         checkpoint = torch.load("Models/gender_model.pth")
         self.gender_model.load_state_dict(checkpoint['weights'])

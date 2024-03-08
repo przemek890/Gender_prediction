@@ -4,6 +4,7 @@ import AVFoundation
 import Vision
 import CoreML
 // ----------------
+
 class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     var captureSession: AVCaptureSession?
     var previewLayer: AVCaptureVideoPreviewLayer?
@@ -39,6 +40,7 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         previewLayer = AVCaptureVideoPreviewLayer(session: captureSession!)
         captureSession!.startRunning()
     }
+    var sequenceHandler = VNSequenceRequestHandler()
 
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer),
@@ -46,26 +48,27 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
 
         var ciImage = CIImage(cvPixelBuffer: pixelBuffer, options: attachments)
 
-        // Handle device orientation
-        let curDevice = UIDevice.current
-        if curDevice.orientation == .landscapeRight {
-            ciImage = ciImage.oriented(forExifOrientation: 6)
-        } else if curDevice.orientation == .landscapeLeft {
-            ciImage = ciImage.oriented(forExifOrientation: 8)
-        } else if curDevice.orientation == .portraitUpsideDown {
-            ciImage = ciImage.oriented(forExifOrientation: 3)
+        switch UIDevice.current.orientation {
+        case .landscapeLeft:
+            ciImage = ciImage.oriented(.down)
+        case .landscapeRight:
+            ciImage = ciImage.oriented(.up)
+        case .portraitUpsideDown:
+            ciImage = ciImage.oriented(.left)
+        default:
+            ciImage = ciImage.oriented(.right)
         }
 
         let faceDetector = CIDetector(ofType: CIDetectorTypeFace, context: nil, options: [CIDetectorAccuracy: CIDetectorAccuracyHigh])
         let faces = faceDetector?.features(in: ciImage)
 
         DispatchQueue.main.async {
-            self.drawFaceBoxes(faces: faces, in: ciImage.extent.size)
+            self.drawFaceBoxes(faces: faces)
         }
     }
 
 
-    func drawFaceBoxes(faces: [CIFeature]?, in imageSize: CGSize) {
+    func drawFaceBoxes(faces: [CIFeature]?) {
         guard let faces = faces else { return }
         faceRectangleLayer?.removeFromSuperlayer()
         faceRectangleLayer = CAShapeLayer()
@@ -74,9 +77,10 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         for face in faces {
             if let face = face as? CIFaceFeature {
                 var faceBox = face.bounds
-                // Transform the face box to the preview layer's coordinate space
-                let transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: -imageSize.height)
-                faceBox = faceBox.applying(transform)
+                let xOffset: CGFloat = 150
+                let yOffset: CGFloat = -450
+                faceBox.origin.x -= xOffset
+                faceBox.origin.y = previewLayer!.frame.height - faceBox.origin.y - faceBox.height - yOffset
                 faceBoxPath.move(to: faceBox.origin)
                 faceBoxPath.append(UIBezierPath(rect: faceBox))
             }
@@ -84,11 +88,13 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
 
         faceRectangleLayer?.path = faceBoxPath.cgPath
         faceRectangleLayer?.strokeColor = UIColor.green.cgColor
-        faceRectangleLayer?.lineWidth = 2
+        faceRectangleLayer?.lineWidth = 5
         faceRectangleLayer?.fillColor = UIColor.clear.cgColor
 
         previewLayer?.addSublayer(faceRectangleLayer!)
     }
+
+
 
     func stopRunning() {
         captureSession?.stopRunning()

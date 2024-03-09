@@ -46,9 +46,9 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer),
               let attachments = CMCopyDictionaryOfAttachments(allocator: kCFAllocatorDefault, target: sampleBuffer, attachmentMode: kCMAttachmentMode_ShouldPropagate) as? [CIImageOption: Any] else { return }
-
+        
         var ciImage = CIImage(cvPixelBuffer: pixelBuffer, options: attachments)
-
+        
         switch UIDevice.current.orientation {
         case .landscapeLeft:
             ciImage = ciImage.oriented(.down)
@@ -59,13 +59,10 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         default:
             ciImage = ciImage.oriented(.right)
         }
-
+        
         let faceDetector = CIDetector(ofType: CIDetectorTypeFace, context: nil, options: [CIDetectorAccuracy: CIDetectorAccuracyHigh])
         let faces = faceDetector?.features(in: ciImage)
-
-        DispatchQueue.main.async {
-            self.drawFaceBoxes(faces: faces)
-        }
+        
         
         // Załaduj model do predykcji płci
         guard let modelURL = Bundle.main.url(forResource: "gender_model", withExtension: "mlmodelc") else {
@@ -144,21 +141,20 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
                 
                 let prediction = try model?.prediction(from: provider)
                 
-                if let predictionValue = prediction?.featureValue(for: "var_40")?.multiArrayValue?[0] {
-                    print("Prediction: \(predictionValue)")
-                } 
-                else {
-                    print("Prediction: Error - prediction value not found")
+                let predictionValue = prediction?.featureValue(for: "var_40")?.multiArrayValue?[0]
+                print("Prediction: \(String(describing: predictionValue))")
+                
+                DispatchQueue.main.async {
+                    self.drawFaceBoxes(faces: faces, prediction: predictionValue)
                 }
-            }
-            catch {
+            } catch {
                 print("Error making prediction: \(error)")
             }
+            
         }
-
     }
 
-    func drawFaceBoxes(faces: [CIFeature]?) {
+    func drawFaceBoxes(faces: [CIFeature]?, prediction: NSNumber?) {
         guard let faces = faces else { return }
         faceRectangleLayer?.removeFromSuperlayer()
         faceRectangleLayer = CAShapeLayer()
@@ -173,6 +169,14 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
                 faceBox.origin.y = previewLayer!.frame.height - faceBox.origin.y - faceBox.height - yOffset
                 faceBoxPath.move(to: faceBox.origin)
                 faceBoxPath.append(UIBezierPath(rect: faceBox))
+                
+                // Dodaj tekst do ramki
+                let textLayer = CATextLayer()
+                textLayer.fontSize = 18
+                textLayer.foregroundColor = UIColor.red.cgColor
+                textLayer.string = prediction?.floatValue ?? 0 >= 0.5 ? "Female" : "Male"
+                textLayer.frame = CGRect(x: faceBox.origin.x, y: faceBox.origin.y - 50, width: 100, height: 20)
+                faceRectangleLayer?.addSublayer(textLayer)
             }
         }
 

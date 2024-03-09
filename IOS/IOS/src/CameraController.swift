@@ -78,38 +78,84 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
             print("Error loading model: \(error)")
         }
         
+        
         // Przeskaluj obraz do 52x52 pikseli
         if let face = faces?.first as? CIFaceFeature {
             let faceBounds = face.bounds
             let faceImage = ciImage.cropped(to: faceBounds)
-            let scaleX = 52 / faceImage.extent.width
-            let scaleY = 52 / faceImage.extent.height
-            let scaledImage = faceImage.transformed(by: CGAffineTransform(scaleX: scaleX, y: scaleY))
-            
-            // Przekształć obraz na RGB
-            let rgbImage = scaledImage.applyingFilter("CIColorControls", parameters: [
-                kCIInputSaturationKey: 1,
-                kCIInputBrightnessKey: 0,
-                kCIInputContrastKey: 1
-            ])
-            
-            // Normalizuj wartości pikseli
-            let normalizedImage = rgbImage.applyingFilter("CIColorMatrix", parameters: [
-                "inputRVector": CIVector(x: 1/255.0, y: 0, z: 0, w: 0),
-                "inputGVector": CIVector(x: 0, y: 1/255.0, z: 0, w: 0),
-                "inputBVector": CIVector(x: 0, y: 0, z: 1/255.0, w: 0),
-                "inputBiasVector": CIVector(x: 0, y: 0, z: 0, w: 0)
-            ])
+            let desiredWidth = 52.0
+            let desiredHeight = 52.0
+            let scaleX = desiredWidth / faceImage.extent.width
+            let scaleY = desiredHeight / faceImage.extent.height
+            var scaledImage = faceImage.transformed(by: CGAffineTransform(scaleX: scaleX, y: scaleY))
             
             // Przekształć CIImage na CVPixelBuffer
             let ciContext = CIContext()
             var pixelBuffer: CVPixelBuffer?
-            let status = CVPixelBufferCreate(kCFAllocatorDefault, Int(normalizedImage.extent.width), Int(normalizedImage.extent.height), kCVPixelFormatType_32ARGB, nil, &pixelBuffer)
+            let status = CVPixelBufferCreate(kCFAllocatorDefault, Int(scaledImage.extent.width), Int(scaledImage.extent.height), kCVPixelFormatType_32BGRA, nil, &pixelBuffer)
             guard status == kCVReturnSuccess else {
                 return
             }
-            ciContext.render(normalizedImage, to: pixelBuffer!)
+            
+            ciContext.render(scaledImage, to: pixelBuffer!)
+            
+            // Sprawdź, czy pixelBuffer nie jest nil
+            guard let pixelBuffer = pixelBuffer else {
+                print("Error: pixelBuffer is nil")
+                return
+            }
+            
+            // Wydrukuj wymiary obrazu
+            let width = CVPixelBufferGetWidth(pixelBuffer)
+            let height = CVPixelBufferGetHeight(pixelBuffer)
+            print("Image dimensions: \(width) x \(height)")
+            
+            // Pobierz wartość każdego piksela
+            CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: 0))
+            let baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer)
+            let bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer)
+            
+            do {
+                // Utwórz MLMultiArray z tablicy pikseli
+                let pixelMultiArray = try MLMultiArray(shape: [1, 3, 52, 52], dataType: .float32)
+                
+                for y in 0..<52 {
+                    for x in 0..<52 {
+                        let pixelBase = baseAddress?.advanced(by: y * bytesPerRow + x * 4)
+                        
+                        let redPixel = pixelBase?.advanced(by: 1).load(as: UInt8.self)
+                        let greenPixel = pixelBase?.advanced(by: 2).load(as: UInt8.self)
+                        let bluePixel = pixelBase?.advanced(by: 3).load(as: UInt8.self)
+                        
+                        let redValue = Float32(redPixel!) / 255.0
+                        let greenValue = Float32(greenPixel!) / 255.0
+                        let blueValue = Float32(bluePixel!) / 255.0
+                        
+                        // Umieść wartości pikseli w MLMultiArray
+                        pixelMultiArray[[0, 0, y, x] as [NSNumber]] = redValue as NSNumber
+                        pixelMultiArray[[0, 1, y, x] as [NSNumber]] = greenValue as NSNumber
+                        pixelMultiArray[[0, 2, y, x] as [NSNumber]] = blueValue as NSNumber
+                    }
+                }
+                
+                CVPixelBufferUnlockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: 0))
+                
+                let provider = try MLDictionaryFeatureProvider(dictionary: ["x_1": pixelMultiArray])
+                
+                let prediction = try model?.prediction(from: provider)
+                
+                if let predictionValue = prediction?.featureValue(for: "var_40")?.multiArrayValue?[0] {
+                    print("Prediction: \(predictionValue)")
+                } 
+                else {
+                    print("Prediction: Error - prediction value not found")
+                }
+            }
+            catch {
+                print("Error making prediction: \(error)")
+            }
         }
+
     }
 
     func drawFaceBoxes(faces: [CIFeature]?) {

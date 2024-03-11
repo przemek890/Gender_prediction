@@ -293,6 +293,8 @@
 				DEVELOPMENT_TEAM = 8PMGQBN6W9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Gender;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Ta aplikacja wymaga dostępu do kamery";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "aplikacja potrzebuje dostępu do galerii zdjęć, aby zapisywać zdjęcia twarzy.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -332,6 +334,8 @@
 				DEVELOPMENT_TEAM = 8PMGQBN6W9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Gender;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Ta aplikacja wymaga dostępu do kamery";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "aplikacja potrzebuje dostępu do galerii zdjęć, aby zapisywać zdjęcia twarzy.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;

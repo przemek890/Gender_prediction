@@ -61,7 +61,13 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         }
         
         let faceDetector = CIDetector(ofType: CIDetectorTypeFace, context: nil, options: [CIDetectorAccuracy: CIDetectorAccuracyHigh])
-        let faces = faceDetector?.features(in: ciImage)
+        var faces = faceDetector?.features(in: ciImage) as? [CIFaceFeature]
+
+        let straightFaces = faces?.filter { face in
+            abs(face.faceAngle) < 10
+        }
+        
+        faces = straightFaces
         
         
         // Załaduj model do predykcji płci
@@ -80,27 +86,14 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         if let face = faces?.first as? CIFaceFeature {
             var faceBounds = face.bounds
             let hairHeight = faceBounds.height * 0.3
-            let hairWidth = faceBounds.width * 0.2
+            let hairWidth = faceBounds.width * 0.3
             faceBounds.origin.y -= hairHeight * 0.5
             faceBounds.origin.x -= hairWidth * 0.5
             faceBounds.size.height += hairHeight
             faceBounds.size.width += hairWidth
 
-            let angleInDegrees = 15.0
-            let angleInRadians = CGFloat(angleInDegrees * Double.pi / 180.0)
-
-            let ciImageBounds = ciImage.extent
-            let midX = ciImageBounds.midX
-            let midY = ciImageBounds.midY
-
-            let transform = CGAffineTransform(translationX: midX, y: midY)
-                .rotated(by: angleInRadians)
-                .translatedBy(x: -midX, y: -midY)
-
-            let rotatedImage = ciImage.transformed(by: transform)
-
-            var faceImage = rotatedImage.cropped(to: faceBounds)
-
+            // Pomiń obrót obrazu
+            let faceImage = ciImage.cropped(to: faceBounds)
 
             let context = CIContext(options: nil)
             guard let cgImage = context.createCGImage(faceImage, from: faceImage.extent) else {
@@ -229,7 +222,7 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         let gender = prediction?.floatValue ?? 0 >= 0.5 ? "Female" : "Male"
         let probability = String(format: "%.2f", abs((prediction?.floatValue ?? 0) * 100))
         textLayer.string = "\(gender) (\(probability)%)"
-        textLayer.frame = CGRect(x: faceBox.origin.x, y: faceBox.origin.y - 50, width: 200, height: 20)
+        textLayer.frame = CGRect(x: faceBox.origin.x, y: faceBox.origin.y - 30, width: 200, height: 20)
         faceRectangleLayer?.addSublayer(textLayer)
 
         faceRectangleLayer?.path = faceBoxPath.cgPath

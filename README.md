@@ -7,6 +7,6 @@ An app that uses camera input to predict the gender of a person.
 
 ---
 
-A beta gender prediction app for IOS is available
+> A beta gender prediction app for IOS is available :)
 
 ![Apple](https://cdn.dribbble.com/users/1161517/screenshots/7896076/apple-logo-animation.gif)

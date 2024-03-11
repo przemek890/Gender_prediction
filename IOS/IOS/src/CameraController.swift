@@ -222,7 +222,7 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         let gender = prediction?.floatValue ?? 0 >= 0.5 ? "Female" : "Male"
         let probability = String(format: "%.2f", abs((prediction?.floatValue ?? 0) * 100))
         textLayer.string = "\(gender) (\(probability)%)"
-        textLayer.frame = CGRect(x: faceBox.origin.x, y: faceBox.origin.y - 50, width: 200, height: 20)
+        textLayer.frame = CGRect(x: faceBox.origin.x, y: faceBox.origin.y - 30, width: 200, height: 20)
         faceRectangleLayer?.addSublayer(textLayer)
 
         faceRectangleLayer?.path = faceBoxPath.cgPath

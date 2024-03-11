@@ -26,8 +26,14 @@ struct CameraView: UIViewControllerRepresentable {
         previewLayer.videoGravity = .resizeAspectFill
         viewController.view.layer.addSublayer(previewLayer)
         context.coordinator.previewLayer = previewLayer
+
+        if !isSwitchOn {
+            context.coordinator.captureSession?.stopRunning()
+        }
+
         return viewController
     }
+
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
         if isSwitchOn && !(context.coordinator.captureSession?.isRunning ?? false) {

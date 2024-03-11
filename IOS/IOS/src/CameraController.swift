@@ -102,8 +102,6 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
             var faceImage = rotatedImage.cropped(to: faceBounds)
 
 
-
-    
             let context = CIContext(options: nil)
             guard let cgImage = context.createCGImage(faceImage, from: faceImage.extent) else {
                 print("Błąd: nie można utworzyć CGImage")
@@ -116,15 +114,13 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
             UIGraphicsBeginImageContextWithOptions(size, false, uiImage.scale)
             
             uiImage.draw(in: CGRect(origin: CGPoint.zero, size: size))
-            
-            UIImageWriteToSavedPhotosAlbum(uiImage, nil, nil, nil)
 
             let scaledImage2 = UIGraphicsGetImageFromCurrentImageContext()
             UIGraphicsEndImageContext()
 
             let ciImage = CIImage(image: scaledImage2!)
 
-            // Przekształć CIImage na CVPixelBuffer
+
             let ciContext = CIContext()
             var pixelBuffer: CVPixelBuffer?
             if let ciImage = ciImage {
@@ -202,7 +198,7 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
                 let prediction = try model?.prediction(from: provider)
                 
                 let predictionValue = prediction?.featureValue(for: "var_40")?.multiArrayValue?[0]
-                print("Prediction: \(String(describing: predictionValue))")
+//                print("Prediction: \(String(describing: predictionValue))")
                 
                 DispatchQueue.main.async {
                     self.drawFaceBoxes(faces: faces, prediction: predictionValue)

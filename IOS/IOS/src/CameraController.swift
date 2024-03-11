@@ -78,31 +78,72 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         
         // Przeskaluj obraz do 52x52 pikseli
         if let face = faces?.first as? CIFaceFeature {
-            let faceBounds = face.bounds
-            let faceImage = ciImage.cropped(to: faceBounds)
-            let desiredWidth = 52.0
-            let desiredHeight = 52.0
-            let scaleX = desiredWidth / faceImage.extent.width
-            let scaleY = desiredHeight / faceImage.extent.height
-            var scaledImage = faceImage.transformed(by: CGAffineTransform(scaleX: scaleX, y: scaleY))
-            
-            // Przekształć CIImage na CVPixelBuffer
-            let ciContext = CIContext()
-            var pixelBuffer: CVPixelBuffer?
-            let status = CVPixelBufferCreate(kCFAllocatorDefault, Int(scaledImage.extent.width), Int(scaledImage.extent.height), kCVPixelFormatType_32BGRA, nil, &pixelBuffer)
-            guard status == kCVReturnSuccess else {
+            var faceBounds = face.bounds
+            let hairHeight = faceBounds.height * 0.3
+            let hairWidth = faceBounds.width * 0.2
+            faceBounds.origin.y -= hairHeight * 0.5
+            faceBounds.origin.x -= hairWidth * 0.5
+            faceBounds.size.height += hairHeight
+            faceBounds.size.width += hairWidth
+
+            let angleInDegrees = 15.0
+            let angleInRadians = CGFloat(angleInDegrees * Double.pi / 180.0)
+
+            let ciImageBounds = ciImage.extent
+            let midX = ciImageBounds.midX
+            let midY = ciImageBounds.midY
+
+            let transform = CGAffineTransform(translationX: midX, y: midY)
+                .rotated(by: angleInRadians)
+                .translatedBy(x: -midX, y: -midY)
+
+            let rotatedImage = ciImage.transformed(by: transform)
+
+            var faceImage = rotatedImage.cropped(to: faceBounds)
+
+
+
+    
+            let context = CIContext(options: nil)
+            guard let cgImage = context.createCGImage(faceImage, from: faceImage.extent) else {
+                print("Błąd: nie można utworzyć CGImage")
                 return
             }
             
-            ciContext.render(scaledImage, to: pixelBuffer!)
+            let uiImage = UIImage(cgImage: cgImage)
             
-            // Sprawdź, czy pixelBuffer nie jest nil
+            let size = CGSize(width: 52, height: 52)
+            UIGraphicsBeginImageContextWithOptions(size, false, uiImage.scale)
+            
+            uiImage.draw(in: CGRect(origin: CGPoint.zero, size: size))
+            
+            UIImageWriteToSavedPhotosAlbum(uiImage, nil, nil, nil)
+
+            let scaledImage2 = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+
+            let ciImage = CIImage(image: scaledImage2!)
+
+            // Przekształć CIImage na CVPixelBuffer
+            let ciContext = CIContext()
+            var pixelBuffer: CVPixelBuffer?
+            if let ciImage = ciImage {
+                let status = CVPixelBufferCreate(kCFAllocatorDefault, Int(ciImage.extent.width), Int(ciImage.extent.height), kCVPixelFormatType_32BGRA, nil, &pixelBuffer)
+                guard status == kCVReturnSuccess else {
+                    return
+                }
+
+                ciContext.render(ciImage, to: pixelBuffer!)
+            } else {
+                print("Error: ciImage is nil")
+            }
+
+            
             guard let pixelBuffer = pixelBuffer else {
                 print("Error: pixelBuffer is nil")
                 return
             }
             
-            // Wydrukuj wymiary obrazu
             let width = CVPixelBufferGetWidth(pixelBuffer)
             let height = CVPixelBufferGetHeight(pixelBuffer)
             print("Image dimensions: \(width) x \(height)")
@@ -115,25 +156,44 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
             do {
                 // Utwórz MLMultiArray z tablicy pikseli
                 let pixelMultiArray = try MLMultiArray(shape: [1, 3, 52, 52], dataType: .float32)
+            
+
+                var dim4 = 0
+                var dim3 = 0
+                var dim2 = 0
+                var dim1 = 0
                 
                 for y in 0..<52 {
                     for x in 0..<52 {
-                        let pixelBase = baseAddress?.advanced(by: y * bytesPerRow + x * 4)
+                        let pixelBase = baseAddress?.advanced(by:  y * bytesPerRow + x * 4)
                         
-                        let redPixel = pixelBase?.advanced(by: 1).load(as: UInt8.self)
-                        let greenPixel = pixelBase?.advanced(by: 2).load(as: UInt8.self)
-                        let bluePixel = pixelBase?.advanced(by: 3).load(as: UInt8.self)
+                        let pix1 = pixelBase?.advanced(by: 2).load(as: UInt8.self)
+                        let pix2 = pixelBase?.advanced(by: 1).load(as: UInt8.self)
+                        let pix3 = pixelBase?.advanced(by: 0).load(as: UInt8.self)
+                        let _  = pixelBase?.advanced(by: 3).load(as: UInt8.self)
                         
-                        let redValue = Float32(redPixel!) / 255.0
-                        let greenValue = Float32(greenPixel!) / 255.0
-                        let blueValue = Float32(bluePixel!) / 255.0
                         
-                        // Umieść wartości pikseli w MLMultiArray
-                        pixelMultiArray[[0, 0, y, x] as [NSNumber]] = redValue as NSNumber
-                        pixelMultiArray[[0, 1, y, x] as [NSNumber]] = greenValue as NSNumber
-                        pixelMultiArray[[0, 2, y, x] as [NSNumber]] = blueValue as NSNumber
+                        let pix1Value = Float32(pix1!) / 255.0
+                        let pix2Value = Float32(pix2!) / 255.0
+                        let pix3Value = Float32(pix3!) / 255.0
+ 
+                        pixelMultiArray[[dim1, dim2, dim3, dim4] as [NSNumber]] = pix1Value as NSNumber
+                        dim4 += 1
+                        if(dim4 == 52) {dim4 = 0; dim3 += 1}
+                        if(dim3 == 52) {dim3 = 0; dim2 += 1}
+                        
+                        pixelMultiArray[[dim1, dim2, dim3, dim4] as [NSNumber]] = pix2Value as NSNumber
+                        dim4 += 1
+                        if(dim4 == 52) {dim4 = 0; dim3 += 1}
+                        if(dim3 == 52) {dim3 = 0; dim2 += 1}
+                        
+                        pixelMultiArray[[dim1, dim2, dim3, dim4] as [NSNumber]] = pix3Value as NSNumber
+                        dim4 += 1
+                        if(dim4 == 52) {dim4 = 0; dim3 += 1}
+                        if(dim3 == 52) {dim3 = 0; dim2 += 1}
                     }
                 }
+
                 
                 CVPixelBufferUnlockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: 0))
                 
@@ -153,32 +213,28 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
             
         }
     }
-
     func drawFaceBoxes(faces: [CIFeature]?, prediction: NSNumber?) {
-        guard let faces = faces else { return }
+        guard let faces = faces, let face = faces.first as? CIFaceFeature else { return }
         faceRectangleLayer?.removeFromSuperlayer()
         faceRectangleLayer = CAShapeLayer()
         let faceBoxPath = UIBezierPath()
 
-        for face in faces {
-            if let face = face as? CIFaceFeature {
-                var faceBox = face.bounds
-                let xOffset: CGFloat = 150
-                let yOffset: CGFloat = -450
-                faceBox.origin.x -= xOffset
-                faceBox.origin.y = previewLayer!.frame.height - faceBox.origin.y - faceBox.height - yOffset
-                faceBoxPath.move(to: faceBox.origin)
-                faceBoxPath.append(UIBezierPath(rect: faceBox))
-                
-                // Dodaj tekst do ramki
-                let textLayer = CATextLayer()
-                textLayer.fontSize = 18
-                textLayer.foregroundColor = UIColor.red.cgColor
-                textLayer.string = prediction?.floatValue ?? 0 >= 0.5 ? "Female" : "Male"
-                textLayer.frame = CGRect(x: faceBox.origin.x, y: faceBox.origin.y - 50, width: 100, height: 20)
-                faceRectangleLayer?.addSublayer(textLayer)
-            }
-        }
+        var faceBox = face.bounds
+        let xOffset: CGFloat = 150
+        let yOffset: CGFloat = -450
+        faceBox.origin.x -= xOffset
+        faceBox.origin.y = previewLayer!.frame.height - faceBox.origin.y - faceBox.height - yOffset
+        faceBoxPath.move(to: faceBox.origin)
+        faceBoxPath.append(UIBezierPath(rect: faceBox))
+        
+        let textLayer = CATextLayer()
+        textLayer.fontSize = 18
+        textLayer.foregroundColor = UIColor.red.cgColor
+        let gender = prediction?.floatValue ?? 0 >= 0.5 ? "Female" : "Male"
+        let probability = String(format: "%.2f", abs((prediction?.floatValue ?? 0) * 100))
+        textLayer.string = "\(gender) (\(probability)%)"
+        textLayer.frame = CGRect(x: faceBox.origin.x, y: faceBox.origin.y - 50, width: 200, height: 20)
+        faceRectangleLayer?.addSublayer(textLayer)
 
         faceRectangleLayer?.path = faceBoxPath.cgPath
         faceRectangleLayer?.strokeColor = UIColor.green.cgColor
@@ -187,6 +243,7 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
 
         previewLayer?.addSublayer(faceRectangleLayer!)
     }
+
 
 
 

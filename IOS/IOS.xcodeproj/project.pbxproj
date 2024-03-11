@@ -8,8 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		341D01F52B9C797F002AAD8C /* CameraController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 341D01F42B9C797F002AAD8C /* CameraController.swift */; };
-		341D01F82B9C82FC002AAD8C /* gender_model.mlpackage in Resources */ = {isa = PBXBuildFile; fileRef = 341D01F72B9C82FC002AAD8C /* gender_model.mlpackage */; };
 		342F00B42B9B494900EC0E19 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 342F00B32B9B494900EC0E19 /* CameraView.swift */; };
+		343C57502B9E80F000BBA9BF /* gender_model.mlpackage in Resources */ = {isa = PBXBuildFile; fileRef = 343C574E2B9E80E800BBA9BF /* gender_model.mlpackage */; };
 		34B00A462B9A78FA006E17D0 /* IOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34B00A452B9A78FA006E17D0 /* IOSApp.swift */; };
 		34B00A482B9A78FA006E17D0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34B00A472B9A78FA006E17D0 /* ContentView.swift */; };
 		34B00A4A2B9A78FC006E17D0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 34B00A492B9A78FC006E17D0 /* Assets.xcassets */; };
@@ -18,8 +18,8 @@
 
 /* Begin PBXFileReference section */
 		341D01F42B9C797F002AAD8C /* CameraController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraController.swift; sourceTree = "<group>"; };
-		341D01F72B9C82FC002AAD8C /* gender_model.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = gender_model.mlpackage; sourceTree = "<group>"; };
 		342F00B32B9B494900EC0E19 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
+		343C574E2B9E80E800BBA9BF /* gender_model.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = gender_model.mlpackage; sourceTree = "<group>"; };
 		34B00A422B9A78FA006E17D0 /* IOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		34B00A452B9A78FA006E17D0 /* IOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSApp.swift; sourceTree = "<group>"; };
 		34B00A472B9A78FA006E17D0 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -51,7 +51,7 @@
 		34B00A392B9A78FA006E17D0 = {
 			isa = PBXGroup;
 			children = (
-				341D01F72B9C82FC002AAD8C /* gender_model.mlpackage */,
+				343C574E2B9E80E800BBA9BF /* gender_model.mlpackage */,
 				34B00A442B9A78FA006E17D0 /* IOS */,
 				34B00A432B9A78FA006E17D0 /* Products */,
 			);
@@ -144,7 +144,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				341D01F82B9C82FC002AAD8C /* gender_model.mlpackage in Resources */,
+				343C57502B9E80F000BBA9BF /* gender_model.mlpackage in Resources */,
 				34B00A4E2B9A78FC006E17D0 /* Preview Assets.xcassets in Resources */,
 				34B00A4A2B9A78FC006E17D0 /* Assets.xcassets in Resources */,
 			);
@@ -294,6 +294,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Ta aplikacja wymaga dostępu do kamery";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "aplikacja potrzebuje dostępu do galerii zdjęć, aby zapisywać zdjęcia twarzy.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -332,6 +333,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Ta aplikacja wymaga dostępu do kamery";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "aplikacja potrzebuje dostępu do galerii zdjęć, aby zapisywać zdjęcia twarzy.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;

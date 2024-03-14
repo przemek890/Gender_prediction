@@ -64,7 +64,7 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         var faces = faceDetector?.features(in: ciImage) as? [CIFaceFeature]
 
         let straightFaces = faces?.filter { face in
-            abs(face.faceAngle) < 10
+            abs(face.faceAngle) < 5.0
         }
         
         faces = straightFaces
@@ -78,16 +78,34 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         } catch {
             print("Error loading model: \(error)")
         }
+        var predictionValue: NSNumber?
         
-        let predictionValue = Predict(faces:faces, ciImage: ciImage, model: model)
+        if let face = faces?.first as? CIFaceFeature {
+            var faceBounds = face.bounds
+            let hairHeight = faceBounds.height * 0.5
+            let hairWidth = faceBounds.width * 0.5
+            faceBounds.origin.y -= hairHeight * 0.5
+            faceBounds.origin.x -= hairWidth * 0.5
+            faceBounds.size.height += hairHeight
+            faceBounds.size.width += hairWidth
+
+            let faceImage = ciImage.cropped(to: faceBounds)
+
+            predictionValue = Predict(faceImage: faceImage, ciImage: ciImage, model: model)
+            
+        }
         
         DispatchQueue.main.async {
-            self.drawFaceBoxes(faces: faces, prediction: predictionValue)
+            self.drawFaceBoxes(faces: faces, prediction: predictionValue ?? -1.0)
         }
     
     }
     func drawFaceBoxes(faces: [CIFeature]?, prediction: NSNumber?) {
-        guard let faces = faces, let face = faces.first as? CIFaceFeature else { return }
+        guard let faces = faces, let face = faces.first as? CIFaceFeature else {
+            faceRectangleLayer?.removeFromSuperlayer()
+            faceRectangleLayer = nil
+            return
+        }
         faceRectangleLayer?.removeFromSuperlayer()
         faceRectangleLayer = CAShapeLayer()
         let faceBoxPath = UIBezierPath()
@@ -97,7 +115,7 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         var yOffset: Double
         if UIDevice.current.userInterfaceIdiom == .pad {
             xOffset = 125
-            yOffset = -425
+            yOffset = -400
         } else if UIDevice.current.userInterfaceIdiom == .phone {
             xOffset = 0.0 // TODO
             yOffset = 0.0 // TODO

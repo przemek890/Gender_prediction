@@ -36,10 +36,12 @@ struct CameraView: UIViewControllerRepresentable {
 
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-        if isSwitchOn && !(context.coordinator.captureSession?.isRunning ?? false) {
-            context.coordinator.captureSession?.startRunning()
-        } else if !isSwitchOn && (context.coordinator.captureSession?.isRunning ?? false) {
-            context.coordinator.captureSession?.stopRunning()
+        DispatchQueue.global(qos: .userInitiated).async {
+            if self.isSwitchOn && !(context.coordinator.captureSession?.isRunning ?? false) {
+                context.coordinator.captureSession?.startRunning()
+            } else if !self.isSwitchOn && (context.coordinator.captureSession?.isRunning ?? false) {
+                context.coordinator.captureSession?.stopRunning()
+            }
         }
     }
 }

@@ -69,8 +69,6 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         
         faces = straightFaces
         
-        
-        // Załaduj model do predykcji płci
         guard let modelURL = Bundle.main.url(forResource: "gender_model", withExtension: "mlmodelc") else {
             fatalError("Failed to find model file.")
         }
@@ -81,126 +79,12 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
             print("Error loading model: \(error)")
         }
         
+        let predictionValue = Predict(faces:faces, ciImage: ciImage, model: model)
         
-        // Przeskaluj obraz do 52x52 pikseli
-        if let face = faces?.first as? CIFaceFeature {
-            var faceBounds = face.bounds
-            let hairHeight = faceBounds.height * 0.3
-            let hairWidth = faceBounds.width * 0.3
-            faceBounds.origin.y -= hairHeight * 0.5
-            faceBounds.origin.x -= hairWidth * 0.5
-            faceBounds.size.height += hairHeight
-            faceBounds.size.width += hairWidth
-
-            // Pomiń obrót obrazu
-            let faceImage = ciImage.cropped(to: faceBounds)
-
-            let context = CIContext(options: nil)
-            guard let cgImage = context.createCGImage(faceImage, from: faceImage.extent) else {
-                print("Błąd: nie można utworzyć CGImage")
-                return
-            }
-            
-            let uiImage = UIImage(cgImage: cgImage)
-            
-            let size = CGSize(width: 52, height: 52)
-            UIGraphicsBeginImageContextWithOptions(size, false, uiImage.scale)
-            
-            uiImage.draw(in: CGRect(origin: CGPoint.zero, size: size))
-
-            let scaledImage2 = UIGraphicsGetImageFromCurrentImageContext()
-            UIGraphicsEndImageContext()
-
-            let ciImage = CIImage(image: scaledImage2!)
-
-
-            let ciContext = CIContext()
-            var pixelBuffer: CVPixelBuffer?
-            if let ciImage = ciImage {
-                let status = CVPixelBufferCreate(kCFAllocatorDefault, Int(ciImage.extent.width), Int(ciImage.extent.height), kCVPixelFormatType_32BGRA, nil, &pixelBuffer)
-                guard status == kCVReturnSuccess else {
-                    return
-                }
-
-                ciContext.render(ciImage, to: pixelBuffer!)
-            } else {
-                print("Error: ciImage is nil")
-            }
-
-            
-            guard let pixelBuffer = pixelBuffer else {
-                print("Error: pixelBuffer is nil")
-                return
-            }
-            
-            let width = CVPixelBufferGetWidth(pixelBuffer)
-            let height = CVPixelBufferGetHeight(pixelBuffer)
-            print("Image dimensions: \(width) x \(height)")
-            
-            // Pobierz wartość każdego piksela
-            CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: 0))
-            let baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer)
-            let bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer)
-            
-            do {
-                // Utwórz MLMultiArray z tablicy pikseli
-                let pixelMultiArray = try MLMultiArray(shape: [1, 3, 52, 52], dataType: .float32)
-            
-
-                var dim4 = 0
-                var dim3 = 0
-                var dim2 = 0
-                var dim1 = 0
-                
-                for y in 0..<52 {
-                    for x in 0..<52 {
-                        let pixelBase = baseAddress?.advanced(by:  y * bytesPerRow + x * 4)
-                        
-                        let pix1 = pixelBase?.advanced(by: 2).load(as: UInt8.self)
-                        let pix2 = pixelBase?.advanced(by: 1).load(as: UInt8.self)
-                        let pix3 = pixelBase?.advanced(by: 0).load(as: UInt8.self)
-                        let _  = pixelBase?.advanced(by: 3).load(as: UInt8.self)
-                        
-                        
-                        let pix1Value = Float32(pix1!) / 255.0
-                        let pix2Value = Float32(pix2!) / 255.0
-                        let pix3Value = Float32(pix3!) / 255.0
- 
-                        pixelMultiArray[[dim1, dim2, dim3, dim4] as [NSNumber]] = pix1Value as NSNumber
-                        dim4 += 1
-                        if(dim4 == 52) {dim4 = 0; dim3 += 1}
-                        if(dim3 == 52) {dim3 = 0; dim2 += 1}
-                        
-                        pixelMultiArray[[dim1, dim2, dim3, dim4] as [NSNumber]] = pix2Value as NSNumber
-                        dim4 += 1
-                        if(dim4 == 52) {dim4 = 0; dim3 += 1}
-                        if(dim3 == 52) {dim3 = 0; dim2 += 1}
-                        
-                        pixelMultiArray[[dim1, dim2, dim3, dim4] as [NSNumber]] = pix3Value as NSNumber
-                        dim4 += 1
-                        if(dim4 == 52) {dim4 = 0; dim3 += 1}
-                        if(dim3 == 52) {dim3 = 0; dim2 += 1}
-                    }
-                }
-
-                
-                CVPixelBufferUnlockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue: 0))
-                
-                let provider = try MLDictionaryFeatureProvider(dictionary: ["x_1": pixelMultiArray])
-                
-                let prediction = try model?.prediction(from: provider)
-                
-                let predictionValue = prediction?.featureValue(for: "var_40")?.multiArrayValue?[0]
-//                print("Prediction: \(String(describing: predictionValue))")
-                
-                DispatchQueue.main.async {
-                    self.drawFaceBoxes(faces: faces, prediction: predictionValue)
-                }
-            } catch {
-                print("Error making prediction: \(error)")
-            }
-            
+        DispatchQueue.main.async {
+            self.drawFaceBoxes(faces: faces, prediction: predictionValue)
         }
+    
     }
     func drawFaceBoxes(faces: [CIFeature]?, prediction: NSNumber?) {
         guard let faces = faces, let face = faces.first as? CIFaceFeature else { return }
@@ -209,8 +93,20 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         let faceBoxPath = UIBezierPath()
 
         var faceBox = face.bounds
-        let xOffset: CGFloat = 150
-        let yOffset: CGFloat = -450
+        var xOffset: Double
+        var yOffset: Double
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            xOffset = 125
+            yOffset = -425
+        } else if UIDevice.current.userInterfaceIdiom == .phone {
+            xOffset = 0.0 // TODO
+            yOffset = 0.0 // TODO
+        }
+        else {
+            xOffset = 0.0
+            yOffset = 0.0
+        }
+        
         faceBox.origin.x -= xOffset
         faceBox.origin.y = previewLayer!.frame.height - faceBox.origin.y - faceBox.height - yOffset
         faceBoxPath.move(to: faceBox.origin)
@@ -218,11 +114,23 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         
         let textLayer = CATextLayer()
         textLayer.fontSize = 18
-        textLayer.foregroundColor = UIColor.red.cgColor
-        let gender = prediction?.floatValue ?? 0 >= 0.5 ? "Female" : "Male"
-        let probability = String(format: "%.2f", abs((prediction?.floatValue ?? 0) * 100))
+        textLayer.foregroundColor = UIColor.white.cgColor
+        let gender = prediction?.floatValue ?? 1.0 >= 0.5 ? "Female" : "Male"
+        var probability: String
+        if gender == "Male" {
+            probability = String(format: "%.2f", abs((1.0 - (prediction?.floatValue ?? 1.0)) * 100))
+        }
+        else {
+            probability = String(format: "%.2f", abs((prediction?.floatValue ?? 0.0) * 100))
+        }
         textLayer.string = "\(gender) (\(probability)%)"
         textLayer.frame = CGRect(x: faceBox.origin.x, y: faceBox.origin.y - 30, width: 200, height: 20)
+
+        textLayer.shadowColor = UIColor.black.cgColor
+        textLayer.shadowOffset = CGSize(width: 0, height: 0)
+        textLayer.shadowOpacity = 1
+        textLayer.shadowRadius = 2
+
         faceRectangleLayer?.addSublayer(textLayer)
 
         faceRectangleLayer?.path = faceBoxPath.cgPath
@@ -231,6 +139,8 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         faceRectangleLayer?.fillColor = UIColor.clear.cgColor
 
         previewLayer?.addSublayer(faceRectangleLayer!)
+
+
     }
 
 

@@ -10,6 +10,7 @@
 		341D01F52B9C797F002AAD8C /* CameraController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 341D01F42B9C797F002AAD8C /* CameraController.swift */; };
 		342F00B42B9B494900EC0E19 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 342F00B32B9B494900EC0E19 /* CameraView.swift */; };
 		343C57502B9E80F000BBA9BF /* gender_model.mlpackage in Resources */ = {isa = PBXBuildFile; fileRef = 343C574E2B9E80E800BBA9BF /* gender_model.mlpackage */; };
+		343EB3DE2BA31A6D0010E3C7 /* Predict.swift in Sources */ = {isa = PBXBuildFile; fileRef = 343EB3DD2BA31A6D0010E3C7 /* Predict.swift */; };
 		34B00A462B9A78FA006E17D0 /* IOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34B00A452B9A78FA006E17D0 /* IOSApp.swift */; };
 		34B00A482B9A78FA006E17D0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34B00A472B9A78FA006E17D0 /* ContentView.swift */; };
 		34B00A4A2B9A78FC006E17D0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 34B00A492B9A78FC006E17D0 /* Assets.xcassets */; };
@@ -20,6 +21,7 @@
 		341D01F42B9C797F002AAD8C /* CameraController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraController.swift; sourceTree = "<group>"; };
 		342F00B32B9B494900EC0E19 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
 		343C574E2B9E80E800BBA9BF /* gender_model.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = gender_model.mlpackage; sourceTree = "<group>"; };
+		343EB3DD2BA31A6D0010E3C7 /* Predict.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Predict.swift; sourceTree = "<group>"; };
 		34B00A422B9A78FA006E17D0 /* IOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		34B00A452B9A78FA006E17D0 /* IOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSApp.swift; sourceTree = "<group>"; };
 		34B00A472B9A78FA006E17D0 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -44,6 +46,7 @@
 			children = (
 				342F00B32B9B494900EC0E19 /* CameraView.swift */,
 				341D01F42B9C797F002AAD8C /* CameraController.swift */,
+				343EB3DD2BA31A6D0010E3C7 /* Predict.swift */,
 			);
 			path = src;
 			sourceTree = "<group>";
@@ -157,6 +160,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				343EB3DE2BA31A6D0010E3C7 /* Predict.swift in Sources */,
 				34B00A482B9A78FA006E17D0 /* ContentView.swift in Sources */,
 				34B00A462B9A78FA006E17D0 /* IOSApp.swift in Sources */,
 				342F00B42B9B494900EC0E19 /* CameraView.swift in Sources */,
@@ -305,8 +309,8 @@
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = UIInterfaceOrientationPortraitUpsideDown;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortraitUpsideDown;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
@@ -346,8 +350,8 @@
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = UIInterfaceOrientationPortraitUpsideDown;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortraitUpsideDown;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";

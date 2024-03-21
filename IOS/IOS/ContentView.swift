@@ -3,6 +3,7 @@ import AVFoundation
 
 struct ContentView: View {
     @State private var isSwitchOn: Bool = false
+    @State private var isFrontCamera: Bool = false
 
     var body: some View {
         VStack {
@@ -22,3 +23,4 @@ struct ContentView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 }
+

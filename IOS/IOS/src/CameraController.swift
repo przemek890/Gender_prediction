@@ -111,14 +111,21 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         let faceBoxPath = UIBezierPath()
 
         var faceBox = face.bounds
+        
+        
         var xOffset: Double
         var yOffset: Double
         if UIDevice.current.userInterfaceIdiom == .pad {
             xOffset = 125
             yOffset = -400
         } else if UIDevice.current.userInterfaceIdiom == .phone {
-            xOffset = 0.0 // TODO
-            yOffset = 0.0 // TODO
+            faceBox.size.width /= 2
+            faceBox.size.height /= 2
+            faceBox.origin.x += faceBox.size.width / 2
+            faceBox.origin.y += faceBox.size.height / 2
+            
+            xOffset = 325
+            yOffset = -625
         }
         else {
             xOffset = 0.0

@@ -17,6 +17,7 @@ struct CameraView: UIViewControllerRepresentable {
             self.parent = parent
             super.init()
         }
+
     }
 
     func makeUIViewController(context: Context) -> UIViewController {
@@ -33,7 +34,6 @@ struct CameraView: UIViewControllerRepresentable {
 
         return viewController
     }
-
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
         DispatchQueue.global(qos: .userInitiated).async {

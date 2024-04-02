@@ -1,16 +1,16 @@
 import cv2
 import numpy as np
 import torch
-from Src.Gender_net import Net
+from Src.Genders_net import Net_1, Net_2, Net_3,Net_4,Net_5
 """"""""""""""""""""""""
 class FaceDetector:
     def __init__(self):
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
         self.video_capture = cv2.VideoCapture(0)
 
-        self.gender_model = Net()
+        self.gender_model = Net_2()
+        checkpoint = torch.load("Models/gender_model_2.pth")
 
-        checkpoint = torch.load("Models/gender_model.pth")
         self.gender_model.load_state_dict(checkpoint['weights'])
         self.gender_model.eval()
 
@@ -24,17 +24,14 @@ class FaceDetector:
                 if w > 0 and h > 0:
                     face_tensor = []
                     face_img = frame[y:y + h, x:x + w]
-                    face_img = cv2.resize(face_img, (52, 52))
+                    face_img = cv2.resize(face_img, (100, 100))
                     face_img = cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB)
                     face_tensor.append(np.asarray(face_img))
-
-                    face_tensor = torch.tensor(np.array(face_tensor) / 255.0, dtype=torch.float32).reshape(-1, 3, 52,52)
+                    face_tensor = torch.tensor(np.array(face_tensor) / 255.0, dtype=torch.float32).reshape(-1, 3, 100,100)
 
                     with torch.no_grad():
                         gender_prediction = self.gender_model(face_tensor)
                         print(gender_prediction)
-
-
 
                     gender_label = "Female" if gender_prediction.item() > 0.5 else "Male"
                     cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
@@ -52,4 +49,3 @@ class FaceDetector:
 
         self.video_capture.release()
         cv2.destroyAllWindows()
-

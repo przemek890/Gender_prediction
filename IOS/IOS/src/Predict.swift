@@ -13,7 +13,7 @@ func Predict(faceImage: CIImage , ciImage: CIImage, model: MLModel?) -> NSNumber
     
     let uiImage = UIImage(cgImage: cgImage)
     
-    let size = CGSize(width: 52, height: 52)
+    let size = CGSize(width: 100, height: 100)
     UIGraphicsBeginImageContextWithOptions(size, false, uiImage.scale)
     
     uiImage.draw(in: CGRect(origin: CGPoint.zero, size: size))
@@ -53,7 +53,7 @@ func Predict(faceImage: CIImage , ciImage: CIImage, model: MLModel?) -> NSNumber
     let bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer)
     
     do {
-        let pixelMultiArray = try MLMultiArray(shape: [1, 3, 52, 52], dataType: .float32)
+        let pixelMultiArray = try MLMultiArray(shape: [1, 3, 100, 100], dataType: .float32)
     
 
         var dim4 = 0
@@ -61,8 +61,8 @@ func Predict(faceImage: CIImage , ciImage: CIImage, model: MLModel?) -> NSNumber
         var dim2 = 0
         var dim1 = 0
         
-        for y in 0..<52 {
-            for x in 0..<52 {
+        for y in 0..<100 {
+            for x in 0..<100 {
                 let pixelBase = baseAddress?.advanced(by:  y * bytesPerRow + x * 4)
                 
                 let pix1 = pixelBase?.advanced(by: 2).load(as: UInt8.self)
@@ -77,18 +77,18 @@ func Predict(faceImage: CIImage , ciImage: CIImage, model: MLModel?) -> NSNumber
 
                 pixelMultiArray[[dim1, dim2, dim3, dim4] as [NSNumber]] = pix1Value as NSNumber
                 dim4 += 1
-                if(dim4 == 52) {dim4 = 0; dim3 += 1}
-                if(dim3 == 52) {dim3 = 0; dim2 += 1}
+                if(dim4 == 100) {dim4 = 0; dim3 += 1}
+                if(dim3 == 100) {dim3 = 0; dim2 += 1}
                 
                 pixelMultiArray[[dim1, dim2, dim3, dim4] as [NSNumber]] = pix2Value as NSNumber
                 dim4 += 1
-                if(dim4 == 52) {dim4 = 0; dim3 += 1}
-                if(dim3 == 52) {dim3 = 0; dim2 += 1}
+                if(dim4 == 100) {dim4 = 0; dim3 += 1}
+                if(dim3 == 100) {dim3 = 0; dim2 += 1}
                 
                 pixelMultiArray[[dim1, dim2, dim3, dim4] as [NSNumber]] = pix3Value as NSNumber
                 dim4 += 1
-                if(dim4 == 52) {dim4 = 0; dim3 += 1}
-                if(dim3 == 52) {dim3 = 0; dim2 += 1}
+                if(dim4 == 100) {dim4 = 0; dim3 += 1}
+                if(dim3 == 100) {dim3 = 0; dim2 += 1}
             }
         }
 

@@ -169,8 +169,6 @@ class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     }
 
 
-
-
     func stopRunning() {
         captureSession?.stopRunning()
     }
